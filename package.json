@@ -1,0 +1,24 @@
+{
+  "name": "com.dvoyni.rondo.unity",
+  "version": "0.1.0",
+  "description": "Unity platform package",
+  "displayName": "Rondo Unity",
+  "unity": "2021.3",
+  "author": {
+    "name": "Sergey Dvoynikov",
+    "email": "s@dvoyni.com",
+    "url": "https://dvoyni.com/"
+  },
+  "dependencies": {
+    "com.dvoyni.rondo.core": "0.1.0",
+    "com.unity.mathematics": "1.2.1",
+    "com.unity.addressables": "1.19.19",
+    "com.unity.render-pipelines.universal": "12.1.7"
+  },
+  "keywords": [
+    "rondo",
+    "mvu",
+    "mvp",
+    "functional"
+  ]
+}
