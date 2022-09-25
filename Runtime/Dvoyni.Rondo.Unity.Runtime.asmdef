@@ -1,6 +1,6 @@
 {
-    "name": "Rondo.Unity",
-    "rootNamespace": "",
+    "name": "Dvoyni.Rondo.Unity",
+    "rootNamespace": "Rondo.Unity",
     "references": [
         "Dvoyni.Rondo.Core",
         "Unity.Addressables",
