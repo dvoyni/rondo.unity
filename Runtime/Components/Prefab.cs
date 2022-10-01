@@ -100,7 +100,7 @@ namespace Rondo.Unity.Components {
                 }
                 tf.SetParent(gameObject.transform, false);
 
-                var messenger = _refs.Remove<IPresenter>(*presenterRef).Messenger;
+                var messenger = _refs.Get<IPresenter>(*presenterRef).Messenger;
                 if (typeof(TComponentModel) != typeof(StaticComponentModel)) {
                     var c = instance.GetComponent<IDataDrivenComponent<TComponentModel>>();
                     Assert.NotNull(c, $"Prefab should contain a component that implements {nameof(IDataDrivenComponent<TComponentModel>)}");
