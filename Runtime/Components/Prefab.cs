@@ -80,9 +80,10 @@ namespace Rondo.Unity.Components {
             if (force || (prev.Address != next.Address)) {
                 AddressablesCache.Load(next.Address, _gameObjectType, gameObject,
                     HandlePrefabLoad(next, _refs.Hash(presenter)));
+                return;
             }
 
-            if (force || (typeof(TComponentModel) != typeof(StaticComponentModel))) {
+            if (typeof(TComponentModel) != typeof(StaticComponentModel)) {
                 if (!prev.ComponentModel.Equals(next.ComponentModel)) {
                     gameObject.GetComponent<IDataDrivenComponent<TComponentModel>>().Sync(next.ComponentModel);
                 }
