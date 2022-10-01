@@ -83,9 +83,10 @@ namespace Rondo.Unity.Components {
                 return;
             }
 
-            if (typeof(TComponentModel) != typeof(StaticComponentModel)) {
+            //TODO: optimize transform access
+            if (typeof(TComponentModel) != typeof(StaticComponentModel) && gameObject.transform.childCount > 0) {
                 if (!prev.ComponentModel.Equals(next.ComponentModel)) {
-                    gameObject.GetComponent<IDataDrivenComponent<TComponentModel>>().Sync(next.ComponentModel);
+                    gameObject.transform.GetChild(0).gameObject.GetComponent<IDataDrivenComponent<TComponentModel>>().Sync(next.ComponentModel);
                 }
             }
         }
