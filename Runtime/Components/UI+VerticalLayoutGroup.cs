@@ -48,9 +48,9 @@ namespace Rondo.Unity.Components {
                 group.childScaleWidth = next.ChildScale.x;
                 group.childScaleHeight = next.ChildScale.y;
             }
-            if (force || !prev.ChildScale.Equals(next.ChildScale)) {
-                group.childForceExpandWidth = next.ChildScale.x;
-                group.childForceExpandHeight = next.ChildScale.y;
+            if (force || !prev.ChildExpand.Equals(next.ChildExpand)) {
+                group.childForceExpandWidth = next.ChildExpand.x;
+                group.childForceExpandHeight = next.ChildExpand.y;
             }
         }
     }

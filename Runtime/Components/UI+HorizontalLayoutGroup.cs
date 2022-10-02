@@ -12,7 +12,7 @@ namespace Rondo.Unity.Components {
             public readonly bool ReverseArrangement;
             public readonly bool2 ChildControl;
             public readonly bool2 ChildScale;
-            public readonly bool ChildExpand;
+            public readonly bool2 ChildExpand;
 
             public LayoutGroupConfig(
                 TextAnchor childAlignment = default,
@@ -21,7 +21,7 @@ namespace Rondo.Unity.Components {
                 bool reverseArrangement = false,
                 bool2 childControl = default,
                 bool2 childScale = default,
-                bool childExpand = default
+                bool2 childExpand = default
             ) {
                 Padding = padding;
                 Spacing = spacing;
@@ -79,9 +79,9 @@ namespace Rondo.Unity.Components {
                 group.childScaleWidth = next.ChildScale.x;
                 group.childScaleHeight = next.ChildScale.y;
             }
-            if (force || !prev.ChildScale.Equals(next.ChildScale)) {
-                group.childForceExpandWidth = next.ChildScale.x;
-                group.childForceExpandHeight = next.ChildScale.y;
+            if (force || !prev.ChildExpand.Equals(next.ChildExpand)) {
+                group.childForceExpandWidth = next.ChildExpand.x;
+                group.childForceExpandHeight = next.ChildExpand.y;
             }
         }
 
