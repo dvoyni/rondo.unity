@@ -163,6 +163,9 @@ namespace Rondo.Unity.Managed {
         private L<Key> ObjKeysUnderPointer(float2 pos) {
             var cam = Presenter.Camera;
             var result = new L<Key>();
+            if (ReferenceEquals(cam, null)) {
+                cam = Presenter.Camera = Camera.main;
+            }
             if (!ReferenceEquals(cam, null)) {
                 var ray = cam.ScreenPointToRay(new float3(pos, 0));
                 var hits = Physics.RaycastNonAlloc(ray, _raycastResults, cam.farClipPlane);
@@ -170,8 +173,16 @@ namespace Rondo.Unity.Managed {
                 for (var i = 0; i < hits; i++) {
                     var hit = _raycastResults[i];
                     var oc = hit.collider.GetComponent<ObjComponent>();
-                    if (oc.Key != default) {
+                    if (!ReferenceEquals(oc, null) && (oc.Key != default)) {
                         result = oc.Key + result;
+                    }
+                    //check prefab parent
+                    var parent = hit.transform.parent;
+                    if (!ReferenceEquals(hit.transform.parent, null)) {
+                        oc = parent.GetComponent<ObjComponent>();
+                        if (!ReferenceEquals(oc, null) && (oc.Children.Count == 0) && (oc.Key != default)) {
+                            result = oc.Key + result;
+                        }
                     }
                 }
             }
