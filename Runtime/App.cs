@@ -81,12 +81,5 @@ namespace Rondo.Unity {
         protected virtual void FixedUpdate() {
             Runtime.TriggerSub(new Timer.TickData(Time.timeAsDouble, Time.deltaTime));
         }
-
-#if UNITY_EDITOR
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void __DomainReload() {
-            Access.__DomainReload();
-        }
-#endif
     }
 }
