@@ -2,6 +2,7 @@ using System;
 using Rondo.Core.Lib;
 using Rondo.Core.Lib.Containers;
 using Rondo.Core.Memory;
+using Rondo.Unity.Managed;
 using Rondo.Unity.Utils;
 using Unity.Mathematics;
 using UnityEngine;
@@ -13,13 +14,13 @@ namespace Rondo.Unity.Components {
         public readonly struct ButtonConfig<TMsg> {
             public readonly bool Interactable;
             public readonly Transition Transition;
-            public readonly delegate*<TMsg> OnClick;
+            public readonly delegate*<Key, TMsg> OnClick;
             public readonly ObjRef TargetGraphic;
             public readonly ColorBlock Colors;
             public readonly SpriteAddressState SpriteAddresses;
 
             public ButtonConfig(
-                delegate*<TMsg> onClick,
+                delegate*<Key, TMsg> onClick,
                 bool interactable = true,
                 Transition transition = Transition.None,
                 ColorBlock colors = default,
@@ -71,7 +72,8 @@ namespace Rondo.Unity.Components {
                 button.onClick.RemoveAllListeners();
                 //TODO: try to remove allocation
                 if (next.OnClick != null) {
-                    button.onClick.AddListener(() => presenter.Messenger.PostMessage(next.OnClick()));
+                    button.onClick.AddListener(() =>
+                            presenter.Messenger.PostMessage(next.OnClick(gameObject.GetComponent<ObjComponent>().Key)));
                 }
             }
             if (next.TargetGraphic == ObjRef.NoRef) {
