@@ -61,7 +61,11 @@ namespace Rondo.Unity.Components {
             var prev = force ? default : *pPrev.Cast<CanvasConfig>();
             var next = *pNext.Cast<CanvasConfig>();
 
-            if (force || (prev.RenderMode != next.RenderMode)) {
+            if (
+                force
+                || (prev.RenderMode != next.RenderMode)
+                || ((UnityEngine.RenderMode)next.RenderMode != canvas.renderMode)
+            ) {
                 canvas.renderMode = (UnityEngine.RenderMode)next.RenderMode;
             }
 
