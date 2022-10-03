@@ -163,7 +163,7 @@ namespace Rondo.Unity.Managed {
         private L<Key> ObjKeysUnderPointer(float2 pos) {
             var cam = Presenter.Camera;
             var result = new L<Key>();
-            if (ReferenceEquals(cam, null)) {
+            if (!cam) {
                 cam = Presenter.Camera = Camera.main;
             }
             if (!ReferenceEquals(cam, null)) {
