@@ -53,7 +53,7 @@ namespace Rondo.Unity.Subs {
 
         private static void CheckCamera(float deltaTime, IPresenter presenter) {
             var cam = presenter.Camera;
-            if (!ReferenceEquals(cam, null)) {
+            if (cam) {
                 var projection = (float4x4)cam.projectionMatrix;
                 var view = (float4x4)cam.worldToCameraMatrix;
 
