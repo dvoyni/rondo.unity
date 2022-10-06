@@ -77,7 +77,7 @@ namespace Rondo.Unity {
             _cache.Clear();
         }
 
-        private readonly struct Pending {
+        public readonly struct Pending {
             public readonly GameObject GameObject;
             public readonly CLa<GameObject, Object> Fn;
             public readonly S Address;
@@ -91,7 +91,7 @@ namespace Rondo.Unity {
             }
         }
 
-        private readonly struct PendingKey : IEquatable<PendingKey> {
+        public readonly struct PendingKey : IEquatable<PendingKey> {
             public readonly GameObject GameObject;
             public readonly CLa<GameObject, Object> Fn;
 

@@ -23,7 +23,7 @@ namespace Rondo.Unity.Subs {
             Lifecycle.OnUpdate += CheckCamera;
         }
 
-        public static Sub<TMsg> ResolutionChanged<TMsg>(delegate*<ResolutionChangedData, Maybe<TMsg>> toMsg)
+        public static Sub ResolutionChanged<TMsg>(delegate*<ResolutionChangedData, Maybe<TMsg>> toMsg)
                 where TMsg : unmanaged {
             return Sub.New(toMsg);
         }
@@ -46,7 +46,7 @@ namespace Rondo.Unity.Subs {
             }
         }
 
-        public static Sub<TMsg> CameraChanged<TMsg>(delegate*<CameraChangedData, Maybe<TMsg>> toMsg)
+        public static Sub CameraChanged<TMsg>(delegate*<CameraChangedData, Maybe<TMsg>> toMsg)
                 where TMsg : unmanaged {
             return Sub.New(toMsg);
         }

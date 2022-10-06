@@ -138,7 +138,7 @@ namespace Rondo.Unity.Components {
             return arr;
         }
 
-        private readonly struct SyncMaterialData {
+        public readonly struct SyncMaterialData {
             public readonly GameObject GameObject;
             public readonly IPresenter Presenter;
             public readonly int Remove;

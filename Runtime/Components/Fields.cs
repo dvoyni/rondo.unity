@@ -20,7 +20,7 @@ namespace Rondo.Unity.Components {
         // ReSharper disable once StaticMemberInGenericType
         private static readonly RefHash _refs = new();
 
-        private readonly struct Data {
+        public readonly struct Data {
             public readonly Ts Type;
             public readonly D<S, Field> Fields;
 
@@ -163,7 +163,7 @@ namespace Rondo.Unity.Components {
             pi.SetValue(component, *ptr.Cast<T>());
         }
 
-        private readonly struct InterData {
+        public readonly struct InterData {
             public readonly GameObject GameObject;
             public readonly Component Component;
             public readonly Ts Type;
@@ -176,7 +176,7 @@ namespace Rondo.Unity.Components {
         }
     }
 
-    internal enum FieldKind {
+    public enum FieldKind {
         Ref,
         Ptr,
         S,

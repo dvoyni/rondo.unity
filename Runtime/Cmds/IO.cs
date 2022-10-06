@@ -19,9 +19,9 @@ namespace Rondo.Unity.Cmds {
             }
         }
 
-        public static Cmd<TMsg> GetRecord<TMsg>(string key, Cf<WithError<Buffer>, TMsg> toMsg)
+        public static Cmd GetRecord<TMsg>(string key, delegate*<WithError<Buffer>, TMsg> toMsg)
                 where TMsg : unmanaged {
-            static void Impl(Ptr pPayload, L<Cf<Ptr, Ptr>> toMsg, PostMessage post) {
+            static void Impl(Ptr pPayload, CLf<Ptr, Ptr> toMsg, PostMessage post) {
                 try {
                     var path = Path.Combine(Application.persistentDataPath, (string)*pPayload.Cast<S>());
                     var bytes = File.ReadAllBytes(path);
@@ -40,7 +40,7 @@ namespace Rondo.Unity.Cmds {
             return Cmd.New(&Impl, toMsg, (S)key);
         }
 
-        private readonly struct PutRecordPayload {
+        public readonly struct PutRecordPayload {
             public readonly S Key;
             public readonly Buffer Buffer;
 
@@ -50,9 +50,9 @@ namespace Rondo.Unity.Cmds {
             }
         }
 
-        public static Cmd<TMsg> PutRecord<TMsg>(string key, Buffer buf, Cf<WithError<int>, TMsg> toMsg)
+        public static Cmd PutRecord<TMsg>(string key, Buffer buf, delegate*<WithError<int>, TMsg> toMsg)
                 where TMsg : unmanaged {
-            static void Impl(Ptr pPayload, L<Cf<Ptr, Ptr>> toMsg, PostMessage post) {
+            static void Impl(Ptr pPayload, CLf<Ptr, Ptr> toMsg, PostMessage post) {
                 try {
                     var payload = pPayload.Cast<PutRecordPayload>();
                     var path = Path.Combine(Application.persistentDataPath, (string)payload->Key);
