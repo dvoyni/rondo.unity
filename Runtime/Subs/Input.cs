@@ -48,12 +48,12 @@ namespace Rondo.Unity.Subs {
             }
         }
 
-        public static Sub<TMsg> PointerEvent<TMsg>(delegate*<PointerEventData, Maybe<TMsg>> toMsg)
+        public static Sub PointerEvent<TMsg>(delegate*<PointerEventData, Maybe<TMsg>> toMsg)
                 where TMsg : unmanaged {
             return Sub.New(toMsg);
         }
 
-        public static Sub<TMsg> CursorMove<TMsg>(delegate*<PointerEventData, Maybe<TMsg>> toMsg)
+        public static Sub CursorMove<TMsg>(delegate*<PointerEventData, Maybe<TMsg>> toMsg)
                 where TMsg : unmanaged {
             return Sub.New(toMsg);
         }

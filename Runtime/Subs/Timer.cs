@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace Rondo.Unity.Subs {
     public static unsafe class Timer {
-        public static Sub<TMsg> Frame<TMsg>(delegate*<FrameData, Maybe<TMsg>> toMsg)
+        public static Sub Frame<TMsg>(delegate*<FrameData, Maybe<TMsg>> toMsg)
                 where TMsg : unmanaged {
             return Sub.New(toMsg);
         }
@@ -22,7 +22,7 @@ namespace Rondo.Unity.Subs {
             }
         }
 
-        public static Sub<TMsg> Tick<TMsg>(delegate*<TickData, Maybe<TMsg>> toMsg)
+        public static Sub Tick<TMsg>(delegate*<TickData, Maybe<TMsg>> toMsg)
                 where TMsg : unmanaged {
             return Sub.New(toMsg);
         }
