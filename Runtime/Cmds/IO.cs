@@ -19,22 +19,23 @@ namespace Rondo.Unity.Cmds {
             }
         }
 
-        public static Cmd GetRecord<TMsg>(string key, Cf<WithError<Buffer>, TMsg> toMsg)
+        public static Cmd GetRecord<TMsg>(string key, CLf<WithError<Buffer>, TMsg> toMsg)
                 where TMsg : unmanaged {
-            static void Impl(Ptr pPayload, Cf<Ptr, Ptr> toMsg, PostMessage post) {
+            static void Impl(Ptr pPayload, CLf<Ptr, Ptr> toMsg, PostMessage post) {
+                Ptr arg;
                 try {
                     var path = Path.Combine(Application.persistentDataPath, (string)*pPayload.Cast<S>());
                     var bytes = File.ReadAllBytes(path);
                     fixed (byte* data = bytes) {
                         var buf = new Buffer((byte*)Mem.C.CopyPtr(data, bytes.Length).Raw, bytes.Length);
-                        var arg = Mem.C.CopyPtr(WithError<Buffer>.Ok(buf));
-                        post(toMsg, arg);
+                        arg = Mem.C.CopyPtr(WithError<Buffer>.Ok(buf));
                     }
                 }
                 catch (Exception ex) {
-                    var arg = Mem.C.CopyPtr(WithError<Buffer>.Exception(ex));
-                    post(toMsg, arg);
+                    arg = Mem.C.CopyPtr(WithError<Buffer>.Exception(ex));
                 }
+                post(toMsg, arg);
+                toMsg.Dispose();
             }
 
             return Cmd.New(&Impl, toMsg, (S)key);
@@ -50,21 +51,23 @@ namespace Rondo.Unity.Cmds {
             }
         }
 
-        public static Cmd PutRecord<TMsg>(string key, Buffer buf, Cf<WithError<int>, TMsg> toMsg)
+        public static Cmd PutRecord<TMsg>(string key, Buffer buf, CLf<WithError<int>, TMsg> toMsg)
                 where TMsg : unmanaged {
-            static void Impl(Ptr pPayload, Cf<Ptr, Ptr> toMsg, PostMessage post) {
+            static void Impl(Ptr pPayload, CLf<Ptr, Ptr> toMsg, PostMessage post) {
+                Ptr arg;
                 try {
                     var payload = pPayload.Cast<PutRecordPayload>();
                     var path = Path.Combine(Application.persistentDataPath, (string)payload->Key);
                     var data = new Span<byte>(payload->Buffer.Data, payload->Buffer.Size);
                     File.WriteAllBytes(path, data.ToArray());
-                    var arg = Mem.C.CopyPtr(WithError<int>.Ok(data.Length));
-                    post(toMsg, arg);
+                    arg = Mem.C.CopyPtr(WithError<int>.Ok(data.Length));
                 }
                 catch (Exception ex) {
-                    var arg = Mem.C.CopyPtr(WithError<int>.Exception(ex));
-                    post(toMsg, arg);
+                    arg = Mem.C.CopyPtr(WithError<int>.Exception(ex));
                 }
+
+                post(toMsg, arg);
+                toMsg.Dispose();
             }
 
             return Cmd.New(&Impl, toMsg, Mem.C.CopyPtr(new PutRecordPayload((S)key, buf)));

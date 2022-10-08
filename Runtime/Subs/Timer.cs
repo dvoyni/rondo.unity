@@ -37,10 +37,11 @@ namespace Rondo.Unity.Subs {
             }
         }
 
-        public static Cmd RequestTime<TMsg>(Cf<double, TMsg> toMsg)
+        public static Cmd RequestTime<TMsg>(CLf<double, TMsg> toMsg)
                 where TMsg : unmanaged {
-            static void Impl(Ptr pPayload, Cf<Ptr, Ptr> toMsg, PostMessage post) {
+            static void Impl(Ptr pPayload, CLf<Ptr, Ptr> toMsg, PostMessage post) {
                 post.Invoke(toMsg, pPayload);
+                toMsg.Dispose();
             }
 
             return Cmd.New(&Impl, toMsg, Time.timeAsDouble);
