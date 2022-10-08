@@ -22,7 +22,7 @@ namespace Rondo.Unity {
         [SerializeField] [HideInInspector] private byte[] _model;
         private static TModel _dumpedModel;
 
-        private static (TModel, L<Cmd<TMsg>>) InitModelFromDump() {
+        private static (TModel, L<Cmd>) InitModelFromDump() {
             return (_dumpedModel, new());
         }
 

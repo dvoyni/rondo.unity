@@ -9,7 +9,7 @@ using UnityEngine.AddressableAssets;
 using Object = UnityEngine.Object;
 
 namespace Rondo.Unity {
-    public unsafe class AddressablesCache {
+    public class AddressablesCache {
         private delegate void LoadDelegate(S address);
 
 #if UNITY_EDITOR

@@ -25,7 +25,7 @@ namespace Rondo.Unity.Utils {
             return a;
         }
 
-        public static CLa<TModel, TMsg, TModel, L<Cmd<TMsg>>> DumpUpdate<TModel, TMsg>(
+        public static CLa<TModel, TMsg, TModel, L<Cmd>> DumpUpdate<TModel, TMsg>(
             S path = default,
             Maybe<CLf<TModel, TMsg, Maybe<S>>> getName = default
         ) where TMsg : unmanaged where TModel : unmanaged {
@@ -33,7 +33,7 @@ namespace Rondo.Unity.Utils {
                 TModel model,
                 TMsg msg,
                 TModel nextModel,
-                L<Cmd<TMsg>> cmd,
+                L<Cmd> cmd,
                 S* path,
                 CLf<TModel, TMsg, Maybe<S>>* getName
             ) {
@@ -88,7 +88,7 @@ namespace Rondo.Unity.Utils {
             if (!getName.Test(out var nfn)) {
                 nfn = CLf.New<TModel, TMsg, Maybe<S>>(&DefaultName);
             }
-            return CLa.New<TModel, TMsg, TModel, L<Cmd<TMsg>>, S, CLf<TModel, TMsg, Maybe<S>>>(&Impl, path, nfn);
+            return CLa.New<TModel, TMsg, TModel, L<Cmd>, S, CLf<TModel, TMsg, Maybe<S>>>(&Impl, path, nfn);
         }
 
         public const string DebugDumDir = "DebugDump";

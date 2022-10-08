@@ -8,7 +8,7 @@ using Unity.Mathematics;
 
 namespace Rondo.Unity.Cmds {
     public static unsafe class Tweener {
-        private static readonly Dictionary<ulong, Tw> _tweeners = new();
+        /*private static readonly Dictionary<ulong, Tw> _tweeners = new();
         private static readonly List<ulong> _tmpIds = new();
         private static ulong _lastId;
         private static double _time;
@@ -29,7 +29,7 @@ namespace Rondo.Unity.Cmds {
             }
         }
 
-        private static Cmd<TMsg> Start<TMsg>(float length, delegate*<float, float> ease, delegate*<State, TMsg> toMsg)
+        private static Cmd Start<TMsg>(float length, delegate*<float, float> ease, delegate*<State, TMsg> toMsg)
                 where TMsg : unmanaged {
             //TODO: cannot be stored. should recreate every mem swap
             static void Impl(Ptr pPayload, L<Cf<Ptr, Ptr>> toMsg, PostMessage post) {
@@ -75,8 +75,8 @@ namespace Rondo.Unity.Cmds {
         private struct Tw {
             public TwArgs Args;
             public PostMessage Post;
-            public L<Cf<Ptr, Ptr>> ToMsg;
-        }
+            public Cf<Ptr, Ptr> ToMsg;
+        }*/
 
         public static float EaseLinear(float x) => x;
         public static float EaseInQuad(float x) => x * x;
