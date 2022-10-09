@@ -1,4 +1,5 @@
 using Rondo.Core.Extras;
+using Rondo.Core.Memory;
 using UnityEngine;
 
 namespace Rondo.Unity {
@@ -10,11 +11,11 @@ namespace Rondo.Unity {
             OnUpdate?.Invoke(deltaTime, presenter);
         }
 
-
 #if UNITY_EDITOR
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void __DomainReload() {
             Access.__DomainReload();
+            Mem.Manager = new MemManager();
         }
 #endif
     }

@@ -14,8 +14,12 @@ namespace Rondo.Unity.Managed {
         public Dictionary<S, GameObject> Children { get; } = new();
 
         public Key Key {
-            get => new Key(Mem.C.CopyPtr(_keyType, _keyData));
-            set => value.Value.CopyToHeap(ref _keyData, ref _keySize, out _keyType);
+            get => new Key(Mem.C.CopyPtrFromOuterMemory(_keyType, _keyData));
+            set => Mem.AllocAndCopyPtrToOuterMemory(value.Value, ref _keyData, ref _keySize, out _keyType);
+        }
+
+        private void OnDestroy() {
+            Mem.FreeOuterMemory(ref _keyData);
         }
     }
 }

@@ -20,7 +20,7 @@ namespace Rondo.Unity.Components {
     public static unsafe class Prefab {
         private static readonly Ts _gameObjectType = (Ts)typeof(GameObject);
 
-        private struct StaticComponentModel : IEquatable<StaticComponentModel> {
+        public struct StaticComponentModel : IEquatable<StaticComponentModel> {
             public bool Equals(StaticComponentModel other) {
                 return true;
             }

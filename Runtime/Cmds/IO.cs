@@ -41,7 +41,7 @@ namespace Rondo.Unity.Cmds {
             return Cmd.New(&Impl, toMsg, (S)key);
         }
 
-        private readonly struct PutRecordPayload {
+        public readonly struct PutRecordPayload {
             public readonly S Key;
             public readonly Buffer Buffer;
 

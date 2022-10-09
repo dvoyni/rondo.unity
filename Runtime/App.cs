@@ -1,5 +1,4 @@
 using Rondo.Core;
-using Rondo.Core.Extras;
 using Rondo.Core.Lib;
 using Rondo.Core.Lib.Containers;
 using Rondo.Core.Lib.Platform;
@@ -10,9 +9,10 @@ using UnityEngine;
 namespace Rondo.Unity {
     public abstract unsafe class App<TModel, TMsg, TScene> : MonoBehaviour
             where TModel : unmanaged where TMsg : unmanaged where TScene : unmanaged {
-        protected abstract Runtime<TModel, TMsg, TScene>.Config Config { get; }
+        protected abstract Runtime<TModel, TMsg, TScene>.Config NewConfig { get; }
         protected abstract IPresenter<TScene> NewPresenter(Transform parent);
 
+        private Runtime<TModel, TMsg, TScene>.Config _config;
         private IPresenter<TScene> _presenter;
 
         protected Runtime<TModel, TMsg, TScene> Runtime { get; private set; }
@@ -27,13 +27,21 @@ namespace Rondo.Unity {
         }
 
         protected virtual void OnEnable() {
-            var config = Config;
-            _presenter = NewPresenter(gameObject.transform);
+            Prepare();
+            PrepareEditor();
+            Run();
+        }
+
+        protected void OnDisable() {
+            CleanupEditor();
+            Cleanup();
+        }
+
+        private void PrepareEditor() {
             if (_useDumpedModel) {
-                config.Init.Dispose();
-                config.Init = CLf.New(&InitModelFromDump);
+                _config.Init.Dispose();
+                _config.Init = CLf.New(&InitModelFromDump);
             }
-            Runtime = new Runtime<TModel, TMsg, TScene>(config, _presenter);
 
             if (_useDumpedModel) {
                 fixed (byte* buf = _model) {
@@ -42,13 +50,12 @@ namespace Rondo.Unity {
                     }
                 }
             }
-            if (Config.Reset.Test(out var reset)) {
+            if (_config.Reset.Test(out var reset)) {
                 reset.Invoke(_dumpedModel);
             }
-            Runtime.Run();
         }
 
-        protected void OnDisable() {
+        private void CleanupEditor() {
             _useDumpedModel = true;
 
             var sz = Serializer.GetSize(Runtime.Model);
@@ -69,10 +76,29 @@ namespace Rondo.Unity {
         protected void OnDisable() { }
 
         protected virtual void Start() {
-            Runtime = new Runtime<TModel, TMsg, TScene>(Config, NewPresenter(gameObject.transform));
-            Runtime.Run();
+            Prepare();
+            Run();
+        }
+        
+        protected virtual void OnDestroy() {
+            Cleanup();
         }
 #endif
+
+        private void Prepare() {
+            Mem.Manager = new MemManager();
+            _config = NewConfig;
+            _presenter = NewPresenter(gameObject.transform);
+        }
+
+        private void Run() {
+            Runtime = new Runtime<TModel, TMsg, TScene>(_config, _presenter);
+            Runtime.Run();
+        }
+
+        private void Cleanup() {
+            _config.Dispose();
+        }
 
         protected virtual void Update() {
             Runtime.TriggerSub(new Timer.FrameData(Time.timeAsDouble, Time.deltaTime));

@@ -1,0 +1,16 @@
+{
+    "name": "Dvoyni.Rondo.Unity.Editor",
+    "rootNamespace": "Rondo.Unity",
+    "references": ["GUID:d7b861ae110bd4299b524eca2e896853","GUID:968f4c40ec17f492fb164b26d7f9efdc"],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

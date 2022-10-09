@@ -17,7 +17,7 @@ namespace Rondo.Unity.Components {
             public readonly float DefaultSpriteDPI;
 
             public CanvasScalerConfig(
-                ScaleMode uiScaleMode= ScaleMode.ScaleWithScreenSize,
+                ScaleMode uiScaleMode = ScaleMode.ScaleWithScreenSize,
                 float2 referenceResolution = default,
                 float scaleFactor = 1,
                 float referencePixelsPerUnit = 100,

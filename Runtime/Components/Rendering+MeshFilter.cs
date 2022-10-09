@@ -7,7 +7,7 @@ using UnityEngine;
 namespace Rondo.Unity.Components {
     //TODO: procedural meshes support
     public static unsafe partial class Rendering {
-        private static readonly Ts _meshType = (Ts)typeof(Mesh);
+        private static readonly Ts _meshType = Ts.OfUnmanaged(typeof(Mesh));
 
         public static readonly quaternion FromBlender = quaternion.Euler(-math.PI / 2, 0, math.PI);
 

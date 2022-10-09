@@ -7,8 +7,8 @@ using UnityEngine;
 
 namespace Rondo.Unity.Components {
     public static unsafe class Rendering2D {
-        private static readonly Ts _spriteType = (Ts)typeof(Sprite);
-        private static readonly Ts _materialType = (Ts)typeof(Material);
+        private static readonly Ts _spriteType = Ts.OfUnmanaged(typeof(Sprite));
+        private static readonly Ts _materialType = Ts.OfUnmanaged(typeof(Material));
         private static Material _defaultSpriteMaterial = new(Shader.Find("Sprites/Default"));
 
 #if UNITY_EDITOR

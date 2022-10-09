@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 namespace Rondo.Unity.Components {
     public static unsafe partial class UI {
-        private static readonly Ts _fontType = (Ts)typeof(Font);
+        private static readonly Ts _fontType = Ts.OfUnmanaged(typeof(Font));
 
         public readonly struct TextConfig {
             // ReSharper disable once MemberHidesStaticFromOuterClass

@@ -11,7 +11,7 @@ using Object = UnityEngine.Object;
 
 namespace Rondo.Unity.Components {
     public static unsafe partial class UI {
-        public readonly struct ButtonConfig<TMsg> {
+        public readonly struct ButtonConfig<TMsg> where TMsg : unmanaged {
             public readonly bool Interactable;
             public readonly Transition Transition;
             public readonly delegate*<Key, TMsg> OnClick;

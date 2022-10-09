@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Rondo.Unity.Components {
     public static unsafe partial class Rendering {
-        private static readonly Ts _materialType = (Ts)typeof(Material);
+        private static readonly Ts _materialType = Ts.OfUnmanaged(typeof(Material));
         private static readonly List<Material[]> _matArrayCache = new();
         private static readonly List<Material> _tmpMaterials = new();
 

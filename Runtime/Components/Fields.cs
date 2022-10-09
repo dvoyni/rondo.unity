@@ -20,7 +20,7 @@ namespace Rondo.Unity.Components {
         // ReSharper disable once StaticMemberInGenericType
         private static readonly RefHash _refs = new();
 
-        private readonly struct Data {
+        public readonly struct Data {
             public readonly Ts Type;
             public readonly D<S, Field> Fields;
 
@@ -191,12 +191,12 @@ namespace Rondo.Unity.Components {
         [FieldOffset(0)] internal S Name;
         [FieldOffset(4)] internal FieldKind Kind;
         [FieldOffset(8)] internal Ts Type;
-        [FieldOffset(12)] internal Ref Ref;
-        [FieldOffset(12)] internal Ptr Ptr;
-        [FieldOffset(12)] internal S S;
-        [FieldOffset(12)] internal int Int;
-        [FieldOffset(12)] internal float Float;
-        [FieldOffset(12)] internal bool Bool;
+        [FieldOffset(16)] internal Ref Ref;
+        [FieldOffset(16)] internal Ptr Ptr;
+        [FieldOffset(16)] internal S S;
+        [FieldOffset(16)] internal int Int;
+        [FieldOffset(16)] internal float Float;
+        [FieldOffset(16)] internal bool Bool;
 
         public Field(string name, object value)
                 : this(name, Mem.C.HashObject(value)) {
