@@ -43,6 +43,8 @@ namespace Rondo.Unity {
                 _config.Init = CLf.New(&InitModelFromDump);
             }
 
+            CreateRuntime();
+
             if (_useDumpedModel) {
                 fixed (byte* buf = _model) {
                     if (!Serializer.Deserialize<TModel>(buf).Success(out _dumpedModel, out var error)) {
@@ -67,8 +69,6 @@ namespace Rondo.Unity {
             fixed (byte* buf = _model) {
                 Serializer.Serialize(Runtime.Model, buf);
             }
-
-            _presenter.Dispose();
         }
 #else
         protected virtual void OnEnable() { }
@@ -77,6 +77,7 @@ namespace Rondo.Unity {
 
         protected virtual void Start() {
             Prepare();
+            CreateRuntime();
             Run();
         }
         
@@ -91,13 +92,17 @@ namespace Rondo.Unity {
             _presenter = NewPresenter(gameObject.transform);
         }
 
-        private void Run() {
+        private void CreateRuntime() {
             Runtime = new Runtime<TModel, TMsg, TScene>(_config, _presenter);
+        }
+
+        private void Run() {
             Runtime.Run();
         }
 
         private void Cleanup() {
             _config.Dispose();
+            _presenter.Dispose();
         }
 
         protected virtual void Update() {
