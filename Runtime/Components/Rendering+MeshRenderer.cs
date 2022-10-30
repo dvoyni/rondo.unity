@@ -11,7 +11,7 @@ namespace Rondo.Unity.Components {
         private static readonly List<Material> _tmpMaterials = new();
 
         public readonly struct MeshRendererConfig {
-            public readonly L<S> MaterialAddresses;
+            public readonly A<S> MaterialAddresses;
             public readonly ShadowCastingMode CastShadows;
             public readonly bool StaticShadowCaster;
             public readonly LightProbeUsage LightProbes;
@@ -20,7 +20,7 @@ namespace Rondo.Unity.Components {
             public readonly uint RenderingLayerMask;
 
             public MeshRendererConfig(
-                L<S> materialAddresses,
+                A<S> materialAddresses,
                 ShadowCastingMode castShadows = ShadowCastingMode.On,
                 bool staticShadowCaster = false,
                 LightProbeUsage lightProbes = LightProbeUsage.BlendProbes,
@@ -113,7 +113,7 @@ namespace Rondo.Unity.Components {
             gameObject.GetComponent<MeshRenderer>().probeAnchor = tfm.transform;
         }
 
-        private static CLa<GameObject, Object> HandleMeshRendererMaterialLoaded(int index) {
+        private static Xa<GameObject, Object> HandleMeshRendererMaterialLoaded(int index) {
             static void Impl(GameObject gameObject, Object material, int* index) {
                 var meshRenderer = gameObject.GetComponent<MeshRenderer>();
                 meshRenderer.GetSharedMaterials(_tmpMaterials);
@@ -126,7 +126,7 @@ namespace Rondo.Unity.Components {
                 meshRenderer.sharedMaterials = TmpMaterialsToArr();
             }
 
-            return CLa.New<GameObject, Object, int>(&Impl, index);
+            return Xa.New<GameObject, Object, int>(&Impl, index);
         }
 
         private static Material[] TmpMaterialsToArr() {

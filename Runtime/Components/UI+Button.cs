@@ -116,7 +116,7 @@ namespace Rondo.Unity.Components {
             gameObject.GetComponent<Button>().targetGraphic = target.GetComponent<Graphic>();
         }
 
-        private static CLa<GameObject, Object> HandleButtonSpriteLoaded(ButtonSpriteKind bsk) {
+        private static Xa<GameObject, Object> HandleButtonSpriteLoaded(ButtonSpriteKind bsk) {
             static void Impl(GameObject gameObject, Object sprite, ButtonSpriteKind* bsk) {
                 var button = gameObject.GetComponent<Button>();
                 var spriteState = button.spriteState;
@@ -137,7 +137,7 @@ namespace Rondo.Unity.Components {
                 button.spriteState = spriteState;
             }
 
-            return CLa.New<GameObject, Object, ButtonSpriteKind>(&Impl, bsk);
+            return Xa.New<GameObject, Object, ButtonSpriteKind>(&Impl, bsk);
         }
 
         private enum ButtonSpriteKind {

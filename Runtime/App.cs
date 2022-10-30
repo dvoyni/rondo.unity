@@ -22,7 +22,7 @@ namespace Rondo.Unity {
         [SerializeField] [HideInInspector] private byte[] _model;
         private static TModel _dumpedModel;
 
-        private static (TModel, L<Cmd>) InitModelFromDump() {
+        private static (TModel, A<Cmd>) InitModelFromDump() {
             return (_dumpedModel, new());
         }
 
@@ -40,7 +40,7 @@ namespace Rondo.Unity {
         private void PrepareEditor() {
             if (_useDumpedModel) {
                 _config.Init.Dispose();
-                _config.Init = CLf.New(&InitModelFromDump);
+                _config.Init = Xf.New(&InitModelFromDump);
             }
 
             CreateRuntime();

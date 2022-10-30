@@ -91,7 +91,7 @@ namespace Rondo.Unity.Components {
             }
         }
 
-        private static CLa<GameObject, Object> HandlePrefabLoad<TComponentModel>(PrefabConfig<TComponentModel> config, Ref presenterRef)
+        private static Xa<GameObject, Object> HandlePrefabLoad<TComponentModel>(PrefabConfig<TComponentModel> config, Ref presenterRef)
                 where TComponentModel : unmanaged, IEquatable<TComponentModel> {
             static void Impl(GameObject gameObject, Object obj, PrefabConfig<TComponentModel>* config, Ref* presenterRef) {
                 var instance = (GameObject)Object.Instantiate(obj);
@@ -112,7 +112,7 @@ namespace Rondo.Unity.Components {
                 }
             }
 
-            return CLa.New<GameObject, Object, PrefabConfig<TComponentModel>, Ref>(&Impl, config, presenterRef);
+            return Xa.New<GameObject, Object, PrefabConfig<TComponentModel>, Ref>(&Impl, config, presenterRef);
         }
     }
 }

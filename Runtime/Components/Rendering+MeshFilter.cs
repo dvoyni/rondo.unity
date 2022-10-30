@@ -49,7 +49,7 @@ namespace Rondo.Unity.Components {
                     gameObject.GetComponent<MeshFilter>().sharedMesh = null;
                 }
                 else {
-                    AddressablesCache.Load(next.MeshAddress, _meshType, gameObject, CLa.New<GameObject, Object>(&HandleMeshFilterMeshLoaded));
+                    AddressablesCache.Load(next.MeshAddress, _meshType, gameObject, Xa.New<GameObject, Object>(&HandleMeshFilterMeshLoaded));
                 }
             }
         }

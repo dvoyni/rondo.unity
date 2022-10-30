@@ -23,8 +23,8 @@ namespace Rondo.Unity {
 
         public Obj(
             string name,
-            L<Comp> components = default,
-            L<Obj> children = default,
+            A<Comp> components = default,
+            A<Obj> children = default,
             bool inactive = default,
             bool @static = default,
             Key key = default,
@@ -42,7 +42,7 @@ namespace Rondo.Unity {
         }
 
         [Conditional("DEBUG")]
-        private static void CheckChildrenNames(L<Obj> children) {
+        private static void CheckChildrenNames(A<Obj> children) {
             static S GetName(Obj obj) => obj.Name;
 
             var sorted = children.SortBy(&GetName);

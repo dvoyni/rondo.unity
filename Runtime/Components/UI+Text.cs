@@ -104,7 +104,7 @@ namespace Rondo.Unity.Components {
                         next.FontAddress,
                         _fontType,
                         gameObject,
-                        CLa.New<GameObject, Object>(&HandleTextFontLoaded)
+                        Xa.New<GameObject, Object>(&HandleTextFontLoaded)
                     );
                 }
             }
@@ -152,7 +152,7 @@ namespace Rondo.Unity.Components {
                         next.MaterialAddress,
                         _materialType,
                         gameObject,
-                        CLa.New<GameObject, Object>(&HandleTextMaterialLoaded)
+                        Xa.New<GameObject, Object>(&HandleTextMaterialLoaded)
                     );
                 }
             }

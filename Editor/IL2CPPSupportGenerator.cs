@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using Rondo.Core.Lib.Containers;
+using Rondo.Core.Memory;
 using UnityEditor;
 using UnityEngine;
 
@@ -65,18 +66,18 @@ namespace Rondo.Unity {
 
                 sb.Clear();
                 sb.AppendLine(lines[0]);
-                sb.AppendLine("using Rondo.Core.Memory;");
+                sb.AppendLine($"using {nameof(Rondo)}.{nameof(Rondo.Core)}.{nameof(Rondo.Core.Memory)};");
                 sb.Append("public static class AssemblyRegistry").Append(Path.GetFileNameWithoutExtension(csPath).Split('.')[0]).AppendLine(" {");
                 sb.AppendLine("public static void __ProduceGeneric  () {");
                 foreach (var t in structs) {
-                    sb.Append("Serializer.__ProduceGenericStruct<").AppendType(t).AppendLine(">();");
+                    sb.Append($"{nameof(Serializer)}.{nameof(Serializer.__ProduceGenericStruct)}<").AppendType(t).AppendLine(">();");
                 }
                 foreach (var t in ls) {
-                    sb.Append("Serializer.__ProduceGenericL<").AppendType(t.GetGenericArguments()[0]).AppendLine(">();");
+                    sb.Append($"{nameof(Serializer)}.{nameof(Serializer.__ProduceGenericA)}<").AppendType(t.GetGenericArguments()[0]).AppendLine(">();");
                 }
                 foreach (var t in ds) {
                     var arg = t.GetGenericArguments();
-                    sb.Append("Serializer.__ProduceGenericD<").AppendType(arg[0]).Append(",").AppendType(arg[1]).AppendLine(">();");
+                    sb.Append($"{nameof(Serializer)}.{nameof(Serializer.__ProduceGenericD)}<").AppendType(arg[0]).Append(",").AppendType(arg[1]).AppendLine(">();");
                 }
                 sb.AppendLine("}");
                 sb.AppendLine("}");
@@ -111,7 +112,7 @@ namespace Rondo.Unity {
 
         private static void AddType(Type t, ref HashSet<Type> structs, ref HashSet<Type> ls, ref HashSet<Type> ds) {
             if (
-                t.Name == "MonoFNPtrFakeClass"
+                t.Name == $"MonoFNPtrFakeClass"
                 || t.Name == "Void"
                 || t.Name.EndsWith("*")
                 || t.IsGenericParameter
@@ -124,7 +125,7 @@ namespace Rondo.Unity {
             var isContainer = false;
             if (t.IsGenericType) {
                 var genericType = t.GetGenericTypeDefinition();
-                if (genericType == typeof(L<>)) {
+                if (genericType == typeof(A<>)) {
                     ls.Add(t);
                     isContainer = true;
                 }

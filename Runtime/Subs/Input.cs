@@ -10,9 +10,9 @@ namespace Rondo.Unity.Subs {
             public readonly PointerEventKind Kind;
             public readonly PointerEventButton Button;
             public readonly float2 ScreenPosition;
-            public readonly L<Key> ObjKeys;
+            public readonly A<Key> ObjKeys;
 
-            public PointerEventData(PointerEventKind kind, PointerEventButton button, float2 screenPosition, L<Key> objKeys) {
+            public PointerEventData(PointerEventKind kind, PointerEventButton button, float2 screenPosition, A<Key> objKeys) {
                 Kind = kind;
                 Button = button;
                 ScreenPosition = screenPosition;
@@ -40,9 +40,9 @@ namespace Rondo.Unity.Subs {
 
         public readonly struct CursorMoveData {
             public readonly float2 ScreenPosition;
-            public readonly L<Ptr> ObjKeys;
+            public readonly A<Ptr> ObjKeys;
 
-            public CursorMoveData(float2 screenPosition, L<Ptr> objKeys) {
+            public CursorMoveData(float2 screenPosition, A<Ptr> objKeys) {
                 ScreenPosition = screenPosition;
                 ObjKeys = objKeys;
             }

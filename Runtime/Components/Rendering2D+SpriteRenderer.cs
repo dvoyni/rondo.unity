@@ -135,20 +135,20 @@ namespace Rondo.Unity.Components {
                 }
                 else {
                     AddressablesCache.Load(
-                        next.MaterialAddress, _materialType, gameObject, CLa.New<GameObject, Object>(&HandleSpriteRendererMaterialLoaded)
+                        next.MaterialAddress, _materialType, gameObject, Xa.New<GameObject, Object>(&HandleSpriteRendererMaterialLoaded)
                     );
                 }
             }
         }
 
-        private static CLa<GameObject, Object> HandleSpriteRendererSpriteLoaded(float2 size) {
+        private static Xa<GameObject, Object> HandleSpriteRendererSpriteLoaded(float2 size) {
             static void Impl(GameObject gameObject, Object sprite, float2* size) {
                 var spriteRenderer = gameObject.GetComponent<SpriteRenderer>();
                 spriteRenderer.sprite = (Sprite)sprite;
                 spriteRenderer.size = *size;
             }
 
-            return CLa.New<GameObject, Object, float2>(&Impl, size);
+            return Xa.New<GameObject, Object, float2>(&Impl, size);
         }
 
         private static void HandleSpriteRendererMaterialLoaded(GameObject gameObject, Object material) {

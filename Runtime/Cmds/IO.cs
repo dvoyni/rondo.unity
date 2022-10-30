@@ -19,9 +19,9 @@ namespace Rondo.Unity.Cmds {
             }
         }
 
-        public static Cmd GetRecord<TMsg>(string key, CLf<WithError<Buffer>, TMsg> toMsg)
+        public static Cmd GetRecord<TMsg>(string key, Xf<WithError<Buffer>, TMsg> toMsg)
                 where TMsg : unmanaged {
-            static void Impl(Ptr pPayload, CLf<Ptr, Ptr> toMsg, PostMessage post) {
+            static void Impl(Ptr pPayload, Xf<Ptr, Ptr> toMsg, PostMessage post) {
                 Ptr arg;
                 try {
                     var path = Path.Combine(Application.persistentDataPath, (string)*pPayload.Cast<S>());
@@ -51,9 +51,9 @@ namespace Rondo.Unity.Cmds {
             }
         }
 
-        public static Cmd PutRecord<TMsg>(string key, Buffer buf, CLf<WithError<int>, TMsg> toMsg)
+        public static Cmd PutRecord<TMsg>(string key, Buffer buf, Xf<WithError<int>, TMsg> toMsg)
                 where TMsg : unmanaged {
-            static void Impl(Ptr pPayload, CLf<Ptr, Ptr> toMsg, PostMessage post) {
+            static void Impl(Ptr pPayload, Xf<Ptr, Ptr> toMsg, PostMessage post) {
                 Ptr arg;
                 try {
                     var payload = pPayload.Cast<PutRecordPayload>();

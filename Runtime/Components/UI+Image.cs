@@ -127,7 +127,7 @@ namespace Rondo.Unity.Components {
                     image.sprite = null;
                 }
                 else {
-                    AddressablesCache.Load(next.SpriteAddress, _spriteType, gameObject, CLa.New<GameObject, Object>(&HandleImageSpriteLoaded));
+                    AddressablesCache.Load(next.SpriteAddress, _spriteType, gameObject, Xa.New<GameObject, Object>(&HandleImageSpriteLoaded));
                 }
             }
 
@@ -136,7 +136,7 @@ namespace Rondo.Unity.Components {
                     image.material = null;
                 }
                 else {
-                    AddressablesCache.Load(next.MaterialAddress, _materialType, gameObject, CLa.New<GameObject, Object>(&HandleImageMaterialLoaded));
+                    AddressablesCache.Load(next.MaterialAddress, _materialType, gameObject, Xa.New<GameObject, Object>(&HandleImageMaterialLoaded));
                 }
             }
         }

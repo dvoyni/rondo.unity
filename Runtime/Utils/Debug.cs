@@ -25,17 +25,17 @@ namespace Rondo.Unity.Utils {
             return a;
         }
 
-        public static CLa<TModel, TMsg, TModel, L<Cmd>> DumpUpdate<TModel, TMsg>(
+        public static Xa<TModel, TMsg, TModel, A<Cmd>> DumpUpdate<TModel, TMsg>(
             S path = default,
-            Maybe<CLf<TModel, TMsg, Maybe<S>>> getName = default
+            Maybe<Xf<TModel, TMsg, Maybe<S>>> getName = default
         ) where TMsg : unmanaged where TModel : unmanaged {
             static void Impl(
                 TModel model,
                 TMsg msg,
                 TModel nextModel,
-                L<Cmd> cmd,
+                A<Cmd> cmd,
                 S* path,
-                CLf<TModel, TMsg, Maybe<S>>* getName
+                Xf<TModel, TMsg, Maybe<S>>* getName
             ) {
                 var dir = (string)*path;
                 Directory.CreateDirectory(dir);
@@ -86,9 +86,9 @@ namespace Rondo.Unity.Utils {
                 path = (S)DebugDumDir;
             }
             if (!getName.Test(out var nfn)) {
-                nfn = CLf.New<TModel, TMsg, Maybe<S>>(&DefaultName);
+                nfn = Xf.New<TModel, TMsg, Maybe<S>>(&DefaultName);
             }
-            return CLa.New<TModel, TMsg, TModel, L<Cmd>, S, CLf<TModel, TMsg, Maybe<S>>>(&Impl, path, nfn);
+            return Xa.New<TModel, TMsg, TModel, A<Cmd>, S, Xf<TModel, TMsg, Maybe<S>>>(&Impl, path, nfn);
         }
 
         public const string DebugDumDir = "DebugDump";

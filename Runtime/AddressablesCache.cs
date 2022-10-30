@@ -30,7 +30,7 @@ namespace Rondo.Unity {
         /// <summary>
         /// Disposes closure when loaded
         /// </summary>
-        public static void Load(S address, Ts type, GameObject gameObject, CLa<GameObject, Object> fn) {
+        public static void Load(S address, Ts type, GameObject gameObject, Xa<GameObject, Object> fn) {
             var x = (address, type);
             if (_cache.TryGetValue(x, out var obj)) {
                 fn.Invoke(gameObject, obj);
@@ -79,11 +79,11 @@ namespace Rondo.Unity {
 
         private readonly struct Pending {
             public readonly GameObject GameObject;
-            public readonly CLa<GameObject, Object> Fn;
+            public readonly Xa<GameObject, Object> Fn;
             public readonly S Address;
             public readonly Ts Type;
 
-            public Pending(S address, Ts type, GameObject gameObject, CLa<GameObject, Object> fn) {
+            public Pending(S address, Ts type, GameObject gameObject, Xa<GameObject, Object> fn) {
                 GameObject = gameObject;
                 Fn = fn;
                 Address = address;
@@ -93,9 +93,9 @@ namespace Rondo.Unity {
 
         private readonly struct PendingKey : IEquatable<PendingKey> {
             public readonly GameObject GameObject;
-            public readonly CLa<GameObject, Object> Fn;
+            public readonly Xa<GameObject, Object> Fn;
 
-            public PendingKey(GameObject gameObject, CLa<GameObject, Object> fn) {
+            public PendingKey(GameObject gameObject, Xa<GameObject, Object> fn) {
                 GameObject = gameObject;
                 Fn = fn;
             }
