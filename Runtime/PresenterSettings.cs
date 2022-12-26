@@ -1,5 +1,5 @@
 namespace Rondo.Unity {
-    public struct Settings {
+    public struct PresenterSettings {
         public bool TriggerPointerMoveEvent;
     }
 }

@@ -1,5 +1,5 @@
 namespace Rondo.Unity.Cmds {
-    public static unsafe class Tweener {
+    public static class Tweener {
         /*private static readonly Dictionary<ulong, Tw> _tweeners = new();
         private static readonly List<ulong> _tmpIds = new();
         private static ulong _lastId;

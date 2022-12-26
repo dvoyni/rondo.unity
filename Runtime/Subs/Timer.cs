@@ -1,15 +1,28 @@
+using System;
 using Rondo.Core;
 using Rondo.Core.Lib;
-using Rondo.Core.Lib.Containers;
-using Rondo.Core.Lib.Platform;
-using Rondo.Core.Memory;
 using UnityEngine;
 
 namespace Rondo.Unity.Subs {
-    public static unsafe class Timer {
-        public static Sub Frame<TMsg>(delegate*<FrameData, Maybe<TMsg>> toMsg)
-                where TMsg : unmanaged {
-            return Sub.New(toMsg);
+    public static class Timer {
+#if UNITY_EDITOR
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void __DomainReload() {
+            Subscribe();
+        }
+#endif
+
+        static Timer() {
+            Subscribe();
+        }
+
+        private static void Subscribe() {
+            Presenter.OnFrame += (dt, p) => p.MessageReceiver.TriggerSub(new FrameData(Time.timeAsDouble, dt));
+            Presenter.OnFixedUpdate += (dt, p) => p.MessageReceiver.TriggerSub(new TickData(Time.timeAsDouble, dt));
+        }
+
+        public static ISub Frame(Func<FrameData, IMsg> toMsg) {
+            return new Sub<FrameData>(toMsg);
         }
 
         public readonly struct FrameData {
@@ -22,9 +35,8 @@ namespace Rondo.Unity.Subs {
             }
         }
 
-        public static Sub Tick<TMsg>(delegate*<TickData, Maybe<TMsg>> toMsg)
-                where TMsg : unmanaged {
-            return Sub.New(toMsg);
+        public static ISub Tick(Func<TickData, IMsg> toMsg) {
+            return new Sub<TickData>(toMsg);
         }
 
         public readonly struct TickData {
@@ -37,14 +49,12 @@ namespace Rondo.Unity.Subs {
             }
         }
 
-        public static Cmd RequestTime<TMsg>(Xf<double, TMsg> toMsg)
-                where TMsg : unmanaged {
-            static void Impl(Ptr pPayload, Xf<Ptr, Ptr> toMsg, PostMessage post) {
-                post.Invoke(toMsg, pPayload);
-                toMsg.Dispose();
-            }
+        public static ICmd RequestTime(Func<double, IMsg> toMsg) {
+            return new Cmd<double>(() => Time.timeAsDouble, toMsg);
+        }
 
-            return Cmd.New(&Impl, toMsg, Time.timeAsDouble);
+        public static ICmd RequestNow(Func<DateTime, IMsg> toMsg) {
+            return new Cmd<DateTime>(() => DateTime.Now, toMsg);
         }
     }
 }

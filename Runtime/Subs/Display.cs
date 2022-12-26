@@ -1,10 +1,11 @@
-using Rondo.Core.Lib.Containers;
-using Rondo.Core.Lib.Platform;
+using System;
+using Rondo.Core;
+using Rondo.Core.Lib;
 using Unity.Mathematics;
 using UnityEngine;
 
 namespace Rondo.Unity.Subs {
-    public static unsafe class Display {
+    public static class Display {
         private static int3 _resolution;
         private static float4x4 _worldToCameraMatrix;
         private static float4x4 _projectionMatrix;
@@ -19,20 +20,19 @@ namespace Rondo.Unity.Subs {
 #endif
 
         static Display() {
-            Lifecycle.OnUpdate += CheckResolution;
-            Lifecycle.OnUpdate += CheckCamera;
+            Presenter.OnFrame += CheckResolution;
+            Presenter.OnFrame += CheckCamera;
         }
 
-        public static Sub ResolutionChanged<TMsg>(delegate*<ResolutionChangedData, Maybe<TMsg>> toMsg)
-                where TMsg : unmanaged {
-            return Sub.New(toMsg);
+        public static ISub ResolutionChanged(Func<ResolutionChangedData, IMsg> toMsg) {
+            return new Sub<ResolutionChangedData>(toMsg);
         }
 
         private static void CheckResolution(float deltaTime, IPresenter presenter) {
             var resolution = new int3(Screen.width, Screen.height, Screen.currentResolution.refreshRate);
             if (!_resolution.Equals(resolution)) {
                 _resolution = resolution;
-                presenter.Messenger.TriggerSub(new ResolutionChangedData(resolution.xy, resolution.z));
+                presenter.MessageReceiver.TriggerSub(new ResolutionChangedData(resolution.xy, resolution.z));
             }
         }
 
@@ -46,9 +46,8 @@ namespace Rondo.Unity.Subs {
             }
         }
 
-        public static Sub CameraChanged<TMsg>(delegate*<CameraChangedData, Maybe<TMsg>> toMsg)
-                where TMsg : unmanaged {
-            return Sub.New(toMsg);
+        public static ISub CameraChanged(Func<CameraChangedData, IMsg> toMsg) {
+            return new Sub<CameraChangedData>(toMsg);
         }
 
         private static void CheckCamera(float deltaTime, IPresenter presenter) {
@@ -60,7 +59,7 @@ namespace Rondo.Unity.Subs {
                 if (!_projectionMatrix.Equals(projection) || !_worldToCameraMatrix.Equals(view)) {
                     _projectionMatrix = projection;
                     _worldToCameraMatrix = view;
-                    presenter.Messenger.TriggerSub(new CameraChangedData(new CameraMx(_worldToCameraMatrix, _projectionMatrix)));
+                    presenter.MessageReceiver.TriggerSub(new CameraChangedData(new CameraMx(_worldToCameraMatrix, _projectionMatrix)));
                 }
             }
         }

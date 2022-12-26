@@ -1,56 +1,41 @@
-using System.Diagnostics;
-using System.Runtime.InteropServices;
-using Rondo.Core.Extras;
-using Rondo.Core.Lib.Containers;
+using System;
+using System.Linq;
+using Rondo.Core.Lib;
 
 namespace Rondo.Unity {
     //TODO: tags support, layers support
-    [StructLayout(LayoutKind.Sequential)]
-    public unsafe struct Obj {
-        internal static ulong _lastIndex;
+    public struct Obj {
+        // ReSharper disable once StaticMemberInGenericType
+        internal static ulong LastIndex;
 
-        public S Name;
-        public D<ulong, Comp> Components;
-        public D<S, Obj> Children;
+        public string Name;
+        public Dict<Type, IComp> Components;
+        public Dict<string, Obj> Children;
         public bool Inactive;
         public bool Static;
-        public Key Key;
+        public object Key;
         public ObjRef Ref;
-
-        public Obj(Obj other) {
-            this = other;
-        }
 
         public Obj(
             string name,
-            A<Comp> components = default,
-            A<Obj> children = default,
+            Arr<IComp> components = default,
+            Arr<Obj> children = default,
             bool inactive = default,
             bool @static = default,
-            Key key = default,
+            object key = default,
             ObjRef objRef = default
         ) {
-            CheckChildrenNames(children);
-
-            Name = (S)(string.IsNullOrEmpty(name) ? $"Obj{++_lastIndex}" : name);
+            Name = string.IsNullOrEmpty(name) ? $"Obj{++LastIndex}" : name;
             Inactive = inactive;
             Static = @static;
-            Components = components.ToDMap(&ObjExtensions.ToObjComp);
-            Children = children.ToDMap(&ObjExtensions.ToObjChild);
+            Components = components.ToDict(c => c.GetType(), c => c);
+            Children = children.ToDict(c => c.Name, c => c);
             Key = key;
             Ref = objRef;
         }
 
-        [Conditional("DEBUG")]
-        private static void CheckChildrenNames(A<Obj> children) {
-            static S GetName(Obj obj) => obj.Name;
-
-            var sorted = children.SortBy(&GetName);
-            for (var i = 1; i < sorted.Length(); i++) {
-                if (sorted.At(i - 1).Test(out var a) && sorted.At(i).Test(out var b)) {
-                    Assert.That(a.Name != b.Name, $"Obj children should have unique names ({(string)a.Name})");
-                }
-            }
+        public override string ToString() {
+            return $"Obj {Name} [Children={Children.Count}] [Components={Components.Count}]";
         }
     }
 }

@@ -1,8 +1,5 @@
 using System;
-using Rondo.Core.Lib;
-using Rondo.Core.Lib.Containers;
-using Rondo.Core.Memory;
-using Rondo.Unity.Managed;
+using Rondo.Core;
 using Rondo.Unity.Utils;
 using Unity.Mathematics;
 using UnityEngine;
@@ -10,135 +7,110 @@ using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
 namespace Rondo.Unity.Components {
-    public static unsafe partial class UI {
-        public readonly struct ButtonConfig<TMsg> where TMsg : unmanaged {
+    public static partial class UI {
+        public readonly struct Button : IComp {
             public readonly bool Interactable;
             public readonly Transition Transition;
-            public readonly delegate*<Key, TMsg> OnClick;
+            public readonly IMsg OnClick;
             public readonly ObjRef TargetGraphic;
             public readonly ColorBlock Colors;
             public readonly SpriteAddressState SpriteAddresses;
 
-            public ButtonConfig(
-                delegate*<Key, TMsg> onClick,
+            public Button(
+                IMsg onClick,
                 bool interactable = true,
                 Transition transition = Transition.None,
                 ColorBlock colors = default,
                 SpriteAddressState spriteAddresses = default,
                 ObjRef targetGraphic = default
             ) {
-                Interactable = interactable;
                 Transition = transition;
                 Colors = colors;
                 SpriteAddresses = spriteAddresses;
+                Interactable = interactable;
                 OnClick = onClick;
                 TargetGraphic = targetGraphic;
             }
-        }
 
-        private static readonly ulong _idButton = CompExtensions.NextId;
+            public void Sync(IPresenter presenter, GameObject gameObject, IComp cPrev) {
+                var create = cPrev == null;
 
-        public static Comp Button<TMsg>(ButtonConfig<TMsg> config) where TMsg : unmanaged {
-            return new Comp(_idButton, &SyncButton<TMsg>, Mem.C.CopyPtr(config));
-        }
+                var button = create ? gameObject.AddComponent<UnityEngine.UI.Button>() : gameObject.GetComponent<UnityEngine.UI.Button>();
+                var prev = create ? default : (Button)cPrev;
 
-        private static void SyncButton<TMsg>(IPresenter presenter, GameObject gameObject, Ptr pPrev, Ptr pNext)
-                where TMsg : unmanaged {
-            if (pPrev == pNext) {
-                return;
-            }
-            if (pNext == Ptr.Null) {
-                Utils.Utils.DestroySafe<Button>(gameObject);
-                return;
-            }
-            if (pPrev == Ptr.Null) {
-                gameObject.AddComponent<Button>();
-            }
-
-            var button = gameObject.GetComponent<Button>();
-            var force = pPrev == Ptr.Null;
-            var prev = force ? default : *pPrev.Cast<ButtonConfig<TMsg>>();
-            var next = *pNext.Cast<ButtonConfig<TMsg>>();
-
-            if (force || (prev.Interactable != next.Interactable)) {
-                button.interactable = next.Interactable;
-            }
-            if (force || (prev.Transition != next.Transition)) {
-                button.transition = (Selectable.Transition)next.Transition;
-            }
+                if (create || (prev.Interactable != Interactable)) {
+                    button.interactable = Interactable;
+                }
+                if (create || (prev.Transition != Transition)) {
+                    button.transition = (Selectable.Transition)Transition;
+                }
 #pragma warning disable 8909
-            if (force || (prev.OnClick != next.OnClick)) {
+                if (create || (prev.OnClick != OnClick)) {
 #pragma warning  restore 8909
-                button.onClick.RemoveAllListeners();
-                //TODO: try to remove allocation
-                if (next.OnClick != null) {
-                    button.onClick.AddListener(() =>
-                            presenter.Messenger.PostMessage(next.OnClick(gameObject.GetComponent<ObjComponent>().Key)));
+                    button.onClick.RemoveAllListeners();
+                    var onClick = OnClick;
+                    button.onClick.AddListener(() => presenter.MessageReceiver.PostMessage(onClick));
                 }
-            }
-            if (next.TargetGraphic == ObjRef.NoRef) {
-                if (prev.TargetGraphic != ObjRef.NoRef) {
-                    button.targetGraphic = null;
+                if (TargetGraphic == ObjRef.NoRef) {
+                    if (prev.TargetGraphic != ObjRef.NoRef) {
+                        button.targetGraphic = null;
+                    }
                 }
-            }
-            else {
-                presenter.RequestObjRef(next.TargetGraphic, gameObject, Ca.New<GameObject, GameObject>(&HandleTargetGraphicsRef));
+                else {
+                    presenter.RequestObjRef(TargetGraphic, go => button.targetGraphic = go.GetComponent<Graphic>());
+                }
+
+                if (create || !prev.Colors.Equals(Colors)) {
+                    button.colors = Colors.UnityColorBlock;
+                }
+                if (create || !prev.SpriteAddresses.Equals(SpriteAddresses)) {
+                    if (prev.SpriteAddresses.Disabled != SpriteAddresses.Disabled) {
+                        AddressablesCache.Load<Sprite>(
+                            SpriteAddresses.Disabled, HandleButtonSpriteLoaded(ButtonSpriteKind.Disabled, button)
+                        );
+                    }
+                    if (prev.SpriteAddresses.Highlighted != SpriteAddresses.Highlighted) {
+                        AddressablesCache.Load<Sprite>(
+                            SpriteAddresses.Highlighted, HandleButtonSpriteLoaded(ButtonSpriteKind.Highlighted, button)
+                        );
+                    }
+                    if (prev.SpriteAddresses.Pressed != SpriteAddresses.Pressed) {
+                        AddressablesCache.Load<Sprite>(
+                            SpriteAddresses.Pressed, HandleButtonSpriteLoaded(ButtonSpriteKind.Pressed, button)
+                        );
+                    }
+                    if (prev.SpriteAddresses.Selected != SpriteAddresses.Selected) {
+                        AddressablesCache.Load<Sprite>(
+                            SpriteAddresses.Selected, HandleButtonSpriteLoaded(ButtonSpriteKind.Selected, button)
+                        );
+                    }
+                }
             }
 
-            if (force || !prev.Colors.Equals(next.Colors)) {
-                button.colors = next.Colors.UnityColorBlock;
-            }
-            if (force || !prev.SpriteAddresses.Equals(next.SpriteAddresses)) {
-                if (prev.SpriteAddresses.Disabled != next.SpriteAddresses.Disabled) {
-                    AddressablesCache.Load(
-                        next.SpriteAddresses.Disabled, _spriteType, gameObject, HandleButtonSpriteLoaded(ButtonSpriteKind.Disabled)
-                    );
-                }
-                if (prev.SpriteAddresses.Highlighted != next.SpriteAddresses.Highlighted) {
-                    AddressablesCache.Load(
-                        next.SpriteAddresses.Highlighted, _spriteType, gameObject, HandleButtonSpriteLoaded(ButtonSpriteKind.Highlighted)
-                    );
-                }
-                if (prev.SpriteAddresses.Pressed != next.SpriteAddresses.Pressed) {
-                    AddressablesCache.Load(
-                        next.SpriteAddresses.Pressed, _spriteType, gameObject, HandleButtonSpriteLoaded(ButtonSpriteKind.Pressed)
-                    );
-                }
-                if (prev.SpriteAddresses.Selected != next.SpriteAddresses.Selected) {
-                    AddressablesCache.Load(
-                        next.SpriteAddresses.Selected, _spriteType, gameObject, HandleButtonSpriteLoaded(ButtonSpriteKind.Selected)
-                    );
-                }
+            public void Remove(IPresenter presenter, GameObject gameObject) {
+                Helpers.DestroySafe<UnityEngine.UI.Button>(gameObject);
             }
         }
 
-        private static void HandleTargetGraphicsRef(GameObject gameObject, GameObject target) {
-            gameObject.GetComponent<Button>().targetGraphic = target.GetComponent<Graphic>();
-        }
-
-        private static Xa<GameObject, Object> HandleButtonSpriteLoaded(ButtonSpriteKind bsk) {
-            static void Impl(GameObject gameObject, Object sprite, ButtonSpriteKind* bsk) {
-                var button = gameObject.GetComponent<Button>();
-                var spriteState = button.spriteState;
-                switch (*bsk) {
-                    case ButtonSpriteKind.Disabled:
-                        spriteState.disabledSprite = (Sprite)sprite;
-                        break;
-                    case ButtonSpriteKind.Highlighted:
-                        spriteState.highlightedSprite = (Sprite)sprite;
-                        break;
-                    case ButtonSpriteKind.Pressed:
-                        spriteState.pressedSprite = (Sprite)sprite;
-                        break;
-                    case ButtonSpriteKind.Selected:
-                        spriteState.selectedSprite = (Sprite)sprite;
-                        break;
-                }
-                button.spriteState = spriteState;
-            }
-
-            return Xa.New<GameObject, Object, ButtonSpriteKind>(&Impl, bsk);
-        }
+        private static Action<Object> HandleButtonSpriteLoaded(ButtonSpriteKind bsk, UnityEngine.UI.Button button) =>
+                sprite => {
+                    var spriteState = button.spriteState;
+                    switch (bsk) {
+                        case ButtonSpriteKind.Disabled:
+                            spriteState.disabledSprite = (Sprite)sprite;
+                            break;
+                        case ButtonSpriteKind.Highlighted:
+                            spriteState.highlightedSprite = (Sprite)sprite;
+                            break;
+                        case ButtonSpriteKind.Pressed:
+                            spriteState.pressedSprite = (Sprite)sprite;
+                            break;
+                        case ButtonSpriteKind.Selected:
+                            spriteState.selectedSprite = (Sprite)sprite;
+                            break;
+                    }
+                    button.spriteState = spriteState;
+                };
 
         private enum ButtonSpriteKind {
             Disabled,
@@ -203,12 +175,12 @@ namespace Rondo.Unity.Components {
         }
 
         public readonly struct SpriteAddressState : IEquatable<SpriteAddressState> {
-            public readonly S Highlighted;
-            public readonly S Pressed;
-            public readonly S Selected;
-            public readonly S Disabled;
+            public readonly string Highlighted;
+            public readonly string Pressed;
+            public readonly string Selected;
+            public readonly string Disabled;
 
-            public SpriteAddressState(S highlighted, S pressed, S selected, S disabled) {
+            public SpriteAddressState(string highlighted, string pressed, string selected, string disabled) {
                 Highlighted = highlighted;
                 Pressed = pressed;
                 Selected = selected;

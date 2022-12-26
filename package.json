@@ -1,6 +1,6 @@
 {
   "name": "com.dvoyni.rondo.unity",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Unity platform package",
   "displayName": "Rondo Unity",
   "unity": "2021.3",

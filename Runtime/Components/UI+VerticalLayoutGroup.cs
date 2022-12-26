@@ -1,56 +1,71 @@
-using Rondo.Core.Memory;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace Rondo.Unity.Components {
-    public static unsafe partial class UI {
-        private static readonly ulong _idVerticalLayoutGroup = CompExtensions.NextId;
+    public static partial class UI {
+        public readonly struct VerticalLayoutGroup : IComp {
+            public readonly int4 Padding;
+            public readonly float Spacing;
+            public readonly TextAnchor ChildAlignment;
+            public readonly bool ReverseArrangement;
+            public readonly bool2 ChildControl;
+            public readonly bool2 ChildScale;
+            public readonly bool2 ChildExpand;
 
-        public static Comp VerticalLayoutGroup(LayoutGroupConfig config) {
-            return new Comp(_idVerticalLayoutGroup, &SyncVerticalLayoutGroup, Mem.C.CopyPtr(config));
-        }
+            public VerticalLayoutGroup(
+                TextAnchor childAlignment = default,
+                int4 padding = default,
+                float spacing = 0,
+                bool reverseArrangement = false,
+                bool2 childControl = default,
+                bool2 childScale = default,
+                bool2 childExpand = default
+            ) {
+                Padding = padding;
+                Spacing = spacing;
+                ChildAlignment = childAlignment;
+                ReverseArrangement = reverseArrangement;
+                ChildControl = childControl;
+                ChildScale = childScale;
+                ChildExpand = childExpand;
+            }
 
-        private static void SyncVerticalLayoutGroup(IPresenter presenter, GameObject gameObject, Ptr pPrev, Ptr pNext) {
-            if (pPrev == pNext) {
-                return;
-            }
-            if (pNext == Ptr.Null) {
-                Utils.Utils.DestroySafe<VerticalLayoutGroup>(gameObject);
-                return;
-            }
-            if (pPrev == Ptr.Null) {
-                gameObject.AddComponent<VerticalLayoutGroup>();
+            public void Sync(IPresenter presenter, GameObject gameObject, IComp cPrev) {
+                var force = cPrev == null;
+                var group = force
+                        ? gameObject.AddComponent<UnityEngine.UI.VerticalLayoutGroup>()
+                        : gameObject.GetComponent<UnityEngine.UI.VerticalLayoutGroup>();
+                var prev = force ? default : (HorizontalLayoutGroup)cPrev;
+                if (force || !prev.Padding.Equals(Padding)) {
+                    group.padding = new RectOffset(Padding.w, Padding.y, Padding.x, Padding.z);
+                }
+                // ReSharper disable once CompareOfFloatsByEqualityOperator
+                if (force || (prev.Spacing != Spacing)) {
+                    group.spacing = Spacing;
+                }
+                if (force || (prev.ChildAlignment != ChildAlignment)) {
+                    group.childAlignment = (UnityEngine.TextAnchor)ChildAlignment;
+                }
+                if (force || (prev.ReverseArrangement != ReverseArrangement)) {
+                    group.reverseArrangement = ReverseArrangement;
+                }
+                if (force || !prev.ChildControl.Equals(ChildControl)) {
+                    group.childControlWidth = ChildControl.x;
+                    group.childControlHeight = ChildControl.y;
+                }
+                if (force || !prev.ChildScale.Equals(ChildScale)) {
+                    group.childScaleWidth = ChildScale.x;
+                    group.childScaleHeight = ChildScale.y;
+                }
+                if (force || !prev.ChildExpand.Equals(ChildExpand)) {
+                    group.childForceExpandWidth = ChildExpand.x;
+                    group.childForceExpandHeight = ChildExpand.y;
+                }
             }
 
-            var group = gameObject.GetComponent<VerticalLayoutGroup>();
-            var force = pPrev == Ptr.Null;
-            var prev = force ? default : *pPrev.Cast<LayoutGroupConfig>();
-            var next = *pNext.Cast<LayoutGroupConfig>();
-
-            if (force || !prev.Padding.Equals(next.Padding)) {
-                group.padding = new RectOffset(next.Padding.w, next.Padding.y, next.Padding.x, next.Padding.z);
-            }
-            // ReSharper disable once CompareOfFloatsByEqualityOperator
-            if (force || (prev.Spacing != next.Spacing)) {
-                group.spacing = next.Spacing;
-            }
-            if (force || (prev.ChildAlignment != next.ChildAlignment)) {
-                group.childAlignment = (UnityEngine.TextAnchor)next.ChildAlignment;
-            }
-            if (force || (prev.ReverseArrangement != next.ReverseArrangement)) {
-                group.reverseArrangement = next.ReverseArrangement;
-            }
-            if (force || !prev.ChildControl.Equals(next.ChildControl)) {
-                group.childControlWidth = next.ChildControl.x;
-                group.childControlHeight = next.ChildControl.y;
-            }
-            if (force || !prev.ChildScale.Equals(next.ChildScale)) {
-                group.childScaleWidth = next.ChildScale.x;
-                group.childScaleHeight = next.ChildScale.y;
-            }
-            if (force || !prev.ChildExpand.Equals(next.ChildExpand)) {
-                group.childForceExpandWidth = next.ChildExpand.x;
-                group.childForceExpandHeight = next.ChildExpand.y;
+            public void Remove(IPresenter presenter, GameObject gameObject) {
+                Utils.Helpers.DestroySafe<UnityEngine.UI.VerticalLayoutGroup>(gameObject);
             }
         }
     }

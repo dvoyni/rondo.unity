@@ -1,11 +1,11 @@
-using Rondo.Core.Memory;
+using Rondo.Unity.Utils;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace Rondo.Unity.Components {
-    public static unsafe partial class UI {
-        public readonly struct CanvasScalerConfig {
+    public static partial class UI {
+        public readonly struct CanvasScaler : IComp {
             public readonly ScaleMode UIScaleMode;
             public readonly float ScaleFactor;
             public readonly float ReferencePixelsPerUnit;
@@ -16,7 +16,7 @@ namespace Rondo.Unity.Components {
             public readonly float FallbackScreenDPI;
             public readonly float DefaultSpriteDPI;
 
-            public CanvasScalerConfig(
+            public CanvasScaler(
                 ScaleMode uiScaleMode = ScaleMode.ScaleWithScreenSize,
                 float2 referenceResolution = default,
                 float scaleFactor = 1,
@@ -37,62 +37,48 @@ namespace Rondo.Unity.Components {
                 FallbackScreenDPI = fallbackScreenDPI;
                 DefaultSpriteDPI = defaultSpriteDPI;
             }
-        }
 
-        private static readonly ulong _idCanvasScaler = CompExtensions.NextId;
+            public void Sync(IPresenter presenter, GameObject gameObject, IComp cPrev) {
+                var create = cPrev == null;
+                var scaler = create ? gameObject.AddComponent<UnityEngine.UI.CanvasScaler>() : gameObject.GetComponent<UnityEngine.UI.CanvasScaler>();
+                var prev = create ? default : (CanvasScaler)cPrev;
 
-        public static Comp CanvasScaler(CanvasScalerConfig config) {
-            return new Comp(_idCanvasScaler, &SyncCanvasScaler, Mem.C.CopyPtr(config));
-        }
+                if (create || (prev.UIScaleMode != UIScaleMode)) {
+                    scaler.uiScaleMode = (UnityEngine.UI.CanvasScaler.ScaleMode)UIScaleMode;
+                }
+                // ReSharper disable once CompareOfFloatsByEqualityOperator
+                if (create || (prev.ScaleFactor != ScaleFactor)) {
+                    scaler.scaleFactor = ScaleFactor;
+                }
+                // ReSharper disable once CompareOfFloatsByEqualityOperator
+                if (create || (prev.ReferencePixelsPerUnit != ReferencePixelsPerUnit)) {
+                    scaler.referencePixelsPerUnit = ReferencePixelsPerUnit;
+                }
+                if (create || !prev.ReferenceResolution.Equals(ReferenceResolution)) {
+                    scaler.referenceResolution = ReferenceResolution;
+                }
+                if (create || (prev.ScreenMatchMode != ScreenMatchMode)) {
+                    scaler.screenMatchMode = (UnityEngine.UI.CanvasScaler.ScreenMatchMode)ScreenMatchMode;
+                }
+                // ReSharper disable once CompareOfFloatsByEqualityOperator
+                if (create || (prev.MatchWidthOrHeight != MatchWidthOrHeight)) {
+                    scaler.matchWidthOrHeight = MatchWidthOrHeight;
+                }
+                if (create || (prev.PhysicalUnit != PhysicalUnit)) {
+                    scaler.physicalUnit = (UnityEngine.UI.CanvasScaler.Unit)PhysicalUnit;
+                }
+                // ReSharper disable once CompareOfFloatsByEqualityOperator
+                if (create || (prev.FallbackScreenDPI != FallbackScreenDPI)) {
+                    scaler.fallbackScreenDPI = FallbackScreenDPI;
+                }
+                // ReSharper disable once CompareOfFloatsByEqualityOperator
+                if (create || (prev.DefaultSpriteDPI != DefaultSpriteDPI)) {
+                    scaler.defaultSpriteDPI = DefaultSpriteDPI;
+                }
+            }
 
-        private static void SyncCanvasScaler(IPresenter presenter, GameObject gameObject, Ptr pPrev, Ptr pNext) {
-            if (pPrev == pNext) {
-                return;
-            }
-            if (pNext == Ptr.Null) {
-                Utils.Utils.DestroySafe<CanvasScaler>(gameObject);
-                return;
-            }
-            if (pPrev == Ptr.Null) {
-                gameObject.AddComponent<CanvasScaler>();
-            }
-
-            var scaler = gameObject.GetComponent<CanvasScaler>();
-            var force = pPrev == Ptr.Null;
-            var prev = force ? default : *pPrev.Cast<CanvasScalerConfig>();
-            var next = *pNext.Cast<CanvasScalerConfig>();
-
-            if (force || (prev.UIScaleMode != next.UIScaleMode)) {
-                scaler.uiScaleMode = (CanvasScaler.ScaleMode)next.UIScaleMode;
-            }
-            // ReSharper disable once CompareOfFloatsByEqualityOperator
-            if (force || (prev.ScaleFactor != next.ScaleFactor)) {
-                scaler.scaleFactor = next.ScaleFactor;
-            }
-            // ReSharper disable once CompareOfFloatsByEqualityOperator
-            if (force || (prev.ReferencePixelsPerUnit != next.ReferencePixelsPerUnit)) {
-                scaler.referencePixelsPerUnit = next.ReferencePixelsPerUnit;
-            }
-            if (force || !prev.ReferenceResolution.Equals(next.ReferenceResolution)) {
-                scaler.referenceResolution = next.ReferenceResolution;
-            }
-            if (force || (prev.ScreenMatchMode != next.ScreenMatchMode)) {
-                scaler.screenMatchMode = (CanvasScaler.ScreenMatchMode)next.ScreenMatchMode;
-            }
-            // ReSharper disable once CompareOfFloatsByEqualityOperator
-            if (force || (prev.MatchWidthOrHeight != next.MatchWidthOrHeight)) {
-                scaler.matchWidthOrHeight = next.MatchWidthOrHeight;
-            }
-            if (force || (prev.PhysicalUnit != next.PhysicalUnit)) {
-                scaler.physicalUnit = (CanvasScaler.Unit)next.PhysicalUnit;
-            }
-            // ReSharper disable once CompareOfFloatsByEqualityOperator
-            if (force || (prev.FallbackScreenDPI != next.FallbackScreenDPI)) {
-                scaler.fallbackScreenDPI = next.FallbackScreenDPI;
-            }
-            // ReSharper disable once CompareOfFloatsByEqualityOperator
-            if (force || (prev.DefaultSpriteDPI != next.DefaultSpriteDPI)) {
-                scaler.defaultSpriteDPI = next.DefaultSpriteDPI;
+            public void Remove(IPresenter presenter, GameObject gameObject) {
+                Helpers.DestroySafe<UnityEngine.UI.CanvasScaler>(gameObject);
             }
         }
 

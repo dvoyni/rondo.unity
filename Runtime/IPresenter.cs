@@ -1,13 +1,13 @@
+using System;
 using Rondo.Core;
-using Rondo.Core.Lib;
 using UnityEngine;
 
 namespace Rondo.Unity {
-    public interface IPresenter {
-        IMessenger Messenger { get; }
+    public interface IPresenter : IPresenter<Obj> {
+        PresenterSettings Settings { get; }
         Camera Camera { get; set; }
-        void RequestObjRef(ObjRef objRef, GameObject gameObject, Ca<GameObject, GameObject> fn);
+        void RequestObjRef(ObjRef objRef, Action<GameObject> fn);
         internal void StoreRef(ObjRef objRef, GameObject gameObject);
-        Settings Settings { get; }
+        IMessageReceiver MessageReceiver { get; }
     }
 }

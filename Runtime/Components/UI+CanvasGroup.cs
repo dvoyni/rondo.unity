@@ -1,15 +1,15 @@
-using Rondo.Core.Memory;
+using Rondo.Unity.Utils;
 using UnityEngine;
 
 namespace Rondo.Unity.Components {
-    public static unsafe partial class UI {
-        public readonly struct CanvasGroupConfig {
+    public static  partial class UI {
+        public readonly struct CanvasGroup : IComp {
             public readonly float Alpha;
             public readonly bool Interactable;
             public readonly bool BlocksRaycasts;
             public readonly bool IgnoreParentGroups;
 
-            public CanvasGroupConfig(
+            public CanvasGroup(
                 float alpha = 1,
                 bool interactable = true,
                 bool blocksRaycasts = true,
@@ -20,43 +20,30 @@ namespace Rondo.Unity.Components {
                 BlocksRaycasts = blocksRaycasts;
                 IgnoreParentGroups = ignoreParentGroups;
             }
-        }
 
-        private static readonly ulong _idCanvasGroup = CompExtensions.NextId;
+            public void Sync(IPresenter presenter, GameObject gameObject, IComp cPrev) {
+                var create = cPrev == null;
+                var canvasGroup = create ? gameObject.AddComponent<UnityEngine.CanvasGroup>() : gameObject.GetComponent<UnityEngine.CanvasGroup>();
+                var prev = create ? default : (CanvasGroup)cPrev;
 
-        public static Comp CanvasGroup(CanvasGroupConfig config) {
-            return new Comp(_idCanvasGroup, &SyncCanvasGroup, Mem.C.CopyPtr(config));
-        }
+                // ReSharper disable once CompareOfFloatsByEqualityOperator
+                if (create || (prev.Alpha != Alpha)) {
+                    canvasGroup.alpha = Alpha;
+                }
+                if (create || (prev.Interactable != Interactable)) {
+                    canvasGroup.interactable = Interactable;
+                }
+                if (create || (prev.BlocksRaycasts != BlocksRaycasts)) {
+                    canvasGroup.blocksRaycasts = BlocksRaycasts;
+                }
+                if (create || (prev.IgnoreParentGroups != IgnoreParentGroups)) {
+                    canvasGroup.ignoreParentGroups = IgnoreParentGroups;
+                }
+            }
 
-        private static void SyncCanvasGroup(IPresenter presenter, GameObject gameObject, Ptr pPrev, Ptr pNext) {
-            if (pPrev == pNext) {
-                return;
-            }
-            if (pNext == Ptr.Null) {
-                Utils.Utils.DestroySafe<CanvasGroup>(gameObject);
-                return;
-            }
-            if (pPrev == Ptr.Null) {
-                gameObject.AddComponent<CanvasGroup>();
-            }
+            public void Remove(IPresenter presenter, GameObject gameObject) {
 
-            var canvasGroup = gameObject.GetComponent<CanvasGroup>();
-            var force = pPrev == Ptr.Null;
-            var prev = force ? default : *pPrev.Cast<CanvasGroupConfig>();
-            var next = *pNext.Cast<CanvasGroupConfig>();
-
-            // ReSharper disable once CompareOfFloatsByEqualityOperator
-            if (force || (prev.Alpha != next.Alpha)) {
-                canvasGroup.alpha = next.Alpha;
-            }
-            if (force || (prev.Interactable != next.Interactable)) {
-                canvasGroup.interactable = next.Interactable;
-            }
-            if (force || (prev.BlocksRaycasts != next.BlocksRaycasts)) {
-                canvasGroup.blocksRaycasts = next.BlocksRaycasts;
-            }
-            if (force || (prev.IgnoreParentGroups != next.IgnoreParentGroups)) {
-                canvasGroup.ignoreParentGroups = next.IgnoreParentGroups;
+                Helpers.DestroySafe<UnityEngine.CanvasGroup>(gameObject);
             }
         }
     }

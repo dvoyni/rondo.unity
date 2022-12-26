@@ -1,175 +1,166 @@
+using System;
 using System.Collections.Generic;
 using Rondo.Core;
-using Rondo.Core.Lib;
-using Rondo.Core.Lib.Containers;
-using Rondo.Core.Memory;
 using Rondo.Unity.Managed;
 using UnityEngine;
 
+// ReSharper disable ParameterHidesMember
+// ReSharper disable LocalVariableHidesMember
 namespace Rondo.Unity {
-    public unsafe class Presenter<TMsg> : IPresenter<Obj>, IPresenter where TMsg : unmanaged {
-        private readonly GameObject _root;
-        private readonly PresenterComponent _presenterComponent;
-        private readonly List<RefRequest> _refRequest = new();
-        private readonly Dictionary<ObjRef, GameObject> _refResolve = new();
+    [DisallowMultipleComponent]
+    public class Presenter : MonoBehaviour, IPresenter {
+        private class DummyMessageReceiver : IMessageReceiver {
+            public void PostMessage(IMsg msg) { }
 
-        private Obj _prev;
-        private Obj _next;
-        private bool _presentRequired;
-        private readonly Settings _settings;
-
-        public Presenter(Transform rootTransform = null, Settings settings = default) {
-            _settings = settings;
-            _root = new GameObject("", typeof(ObjComponent));
-            _root.transform.SetParent(rootTransform, false);
-            _presenterComponent = new GameObject($"{nameof(Rondo)}.{nameof(PresenterComponent)}", typeof(PresenterComponent))
-                    .GetComponent<PresenterComponent>();
-            _presenterComponent.OnFrameEnded = Ca.New<IPresenter>(&HandleFrameEnded);
-            _presenterComponent.Presenter = this;
+            public void TriggerSub<T>(T eventData) { }
         }
 
-        public IMessenger Messenger { get; set; }
+        private readonly List<RefRequest> _refRequest = new();
+        private readonly Dictionary<ObjRef, GameObject> _refResolve = new();
+        private IMessageReceiver _messageReceiver = new DummyMessageReceiver();
+        private PresenterSettings _settings;
 
-        public Camera Camera { get; set; }
+        private GameObject _root;
+        private Obj _next;
+        private bool _presentRequired;
 
-        public void RequestObjRef(ObjRef objRef, GameObject gameObject, Ca<GameObject, GameObject> fn) {
-            _refRequest.Add(new RefRequest(objRef, gameObject, fn));
+        public static Presenter Create(PresenterSettings settings = default) {
+            var go = new GameObject($"{nameof(Rondo)}.{nameof(Presenter)}", typeof(Presenter), typeof(InputComponent));
+
+            var presenter = go.GetComponent<Presenter>();
+            presenter._settings = settings;
+            presenter._root = new GameObject("", typeof(ObjComponent));
+            presenter._root.transform.SetParent(presenter.transform, false);
+
+            return presenter;
+        }
+
+        public delegate void UpdateDelegate(float deltaTime, IPresenter presenter);
+        public static event UpdateDelegate OnFixedUpdate;
+        public static event UpdateDelegate OnFrame;
+
+        void IPresenter<Obj>.Present(Obj next, IMessageReceiver messageReceiver) {
+            _messageReceiver = messageReceiver;
+            _next = next;
+            _presentRequired = true;
+        }
+
+        PresenterSettings IPresenter.Settings => _settings;
+
+        Camera IPresenter.Camera { get; set; }
+
+        void IPresenter.RequestObjRef(ObjRef objRef, Action<GameObject> fn) {
+            _refRequest.Add(new RefRequest(objRef, fn));
         }
 
         void IPresenter.StoreRef(ObjRef objRef, GameObject gameObject) {
             _refResolve[objRef] = gameObject;
         }
 
-        public Settings Settings => _settings;
+        IMessageReceiver IPresenter.MessageReceiver => _messageReceiver;
 
-        void IPresenter<Obj>.Present(Obj next) {
-            _next = next;
-            _presentRequired = true;
-            _prev = Serializer.Clone(_prev);
+        private void Awake() {
+            foreach (var presenter in FindObjectsOfType<Presenter>()) {
+                if (presenter != this) {
+                    Destroy(presenter.gameObject);
+                }
+            }
         }
 
-        private static void HandleFrameEnded(IPresenter presenter) {
-            ((Presenter<TMsg>)presenter).HandleFrameEnded();
+        private void FixedUpdate() {
+            OnFixedUpdate?.Invoke(Time.fixedDeltaTime, this);
         }
 
-        private void HandleFrameEnded() {
+        private void Update() {
+            OnFrame?.Invoke(Time.deltaTime, this);
+        }
+
+        private void LateUpdate() {
             if (_presentRequired) {
                 _presentRequired = false;
                 _refRequest.Clear();
                 _refResolve.Clear();
-                SyncGameObject(_prev, _next, new SyncData(this, _root));
+                SyncGameObject(_next, _root.GetComponent<ObjComponent>());
                 foreach (var r in _refRequest) {
-                    if (_refResolve.TryGetValue(r.ObjRef, out var target)) {
-                        r.Fn.Invoke(r.GameObject, target);
-                    }
-                    else {
-                        r.Fn.Invoke(r.GameObject, null);
-                    }
+                    r.Fn.Invoke(_refResolve.TryGetValue(r.ObjRef, out var target) ? target : null);
                 }
-                _prev = _next;
-                Obj._lastIndex = 0;
+                Obj.LastIndex = 0;
             }
         }
 
-        private static void SyncChildren(Obj prev, Obj next, SyncData sd) {
-            prev.Children.Merge(next.Children, &RemoveChild, &SyncChild, &AddChild, sd);
-        }
+        private void SyncGameObject(Obj next, ObjComponent obj) {
+            var gameObject = obj.gameObject;
+            var prev = obj.Prev;
 
-        private static SyncData AddChild(S name, Obj next, SyncData sd) {
-            return SyncChild(name, new Obj(), next, sd);
-        }
-
-        private static SyncData SyncChild(S name, Obj prev, Obj next, SyncData sd) {
-            if (!sd.ObjComponent.Children.TryGetValue(name, out var child)) {
-                sd.ObjComponent.Children[name] = child = new GameObject((string)name, typeof(ObjComponent));
-                child.transform.SetParent(sd.GameObject.transform, false);
-            }
-
-            SyncGameObject(prev, next, new SyncData(sd.Presenter, child));
-            return sd;
-        }
-
-        private static SyncData RemoveChild(S name, Obj prev, SyncData sd) {
-            if (sd.ObjComponent.Children.Remove(name, out var gameObject)) {
-                Object.Destroy(gameObject);
-            }
-            return sd;
-        }
-
-        private static void SyncGameObject(Obj prev, Obj next, SyncData sd) {
             if (prev.Inactive != next.Inactive) {
-                sd.GameObject.SetActive(!next.Inactive);
+                gameObject.SetActive(!next.Inactive);
             }
 
             if (prev.Name != next.Name) {
-                sd.GameObject.name = (string)next.Name;
+                gameObject.name = next.Name;
             }
 
             if (prev.Static != next.Static) {
-                sd.GameObject.isStatic = next.Static;
+                gameObject.isStatic = next.Static;
             }
 
             if (prev.Key != next.Key) {
-                sd.GameObject.GetComponent<ObjComponent>().Key = next.Key;
+                gameObject.GetComponent<ObjComponent>().Key = next.Key;
             }
 
             if (next.Ref != ObjRef.NoRef) {
-                sd.Presenter.StoreRef(next.Ref, sd.GameObject);
+                ((IPresenter)this).StoreRef(next.Ref, gameObject);
             }
 
-            SyncComponents(prev.Components, next.Components, sd);
-            SyncChildren(prev, next, new SyncData(sd.Presenter, sd.GameObject));
+            SyncComponents(prev.Components, next.Components, obj.gameObject);
+            SyncChildren(next, obj);
+            obj.Prev = next;
         }
 
-        private static void SyncComponents(D<ulong, Comp> prev, D<ulong, Comp> next, SyncData sd) {
-            prev.Merge(next, &RemoveComponent, &UpdateComponent, &AddComponent, sd);
+        private void SyncComponents(
+            IReadOnlyDictionary<Type, IComp> prev, IReadOnlyDictionary<Type, IComp> next, GameObject gameObject
+        ) {
+            foreach (var (type, p) in prev) {
+                if (!next.ContainsKey(type)) {
+                    p.Remove(this, gameObject);
+                }
+            }
+
+            foreach (var (type, n) in next) {
+                prev.TryGetValue(type, out var p);
+                if (!n.Equals(p)) {
+                    n.Sync(this, gameObject, p);
+                }
+            }
         }
 
-        private static SyncData AddComponent(ulong _, Comp next, SyncData sd) {
-            next.Sync(sd.Presenter, sd.GameObject, Ptr.Null, next.Data);
-            return sd;
-        }
+        private void SyncChildren(Obj next, ObjComponent obj) {
+            foreach (var (name, n) in next.Children) {
+                if (!obj.Children.TryGetValue(name, out var child)) {
+                    obj.Children[name] = child =
+                            new GameObject(name, typeof(ObjComponent)).GetComponent<ObjComponent>();
+                    child.transform.SetParent(obj.gameObject.transform, false);
+                }
 
-        private static SyncData UpdateComponent(ulong _, Comp prev, Comp next, SyncData sd) {
-            next.Sync(sd.Presenter, sd.GameObject, prev.Data, next.Data);
-            return sd;
-        }
+                SyncGameObject(n, child);
+            }
 
-        private static SyncData RemoveComponent(ulong _, Comp prev, SyncData sd) {
-            prev.Sync(sd.Presenter, sd.GameObject, prev.Data, Ptr.Null);
-            return sd;
-        }
-
-        private readonly struct SyncData {
-            public readonly IPresenter Presenter;
-            public readonly GameObject GameObject;
-            public readonly ObjComponent ObjComponent;
-
-            public SyncData(IPresenter presenter, GameObject gameObject) {
-                Presenter = presenter;
-                GameObject = gameObject;
-                ObjComponent = gameObject.GetComponent<ObjComponent>();
+            foreach (var (name, _) in obj.Prev.Children) {
+                if (!next.Children.ContainsKey(name)) {
+                    if (obj.Children.Remove(name, out var child)) {
+                        Destroy(child.gameObject);
+                    }
+                }
             }
         }
 
         private readonly struct RefRequest {
             public readonly ObjRef ObjRef;
-            public readonly GameObject GameObject;
-            public readonly Ca<GameObject, GameObject> Fn;
+            public readonly Action<GameObject> Fn;
 
-            public RefRequest(ObjRef objRef, GameObject gameObject, Ca<GameObject, GameObject> fn) {
+            public RefRequest(ObjRef objRef, Action<GameObject> fn) {
                 ObjRef = objRef;
-                GameObject = gameObject;
                 Fn = fn;
-            }
-        }
-
-        public void Dispose() {
-            if (_root) {
-                Object.Destroy(_root);
-            }
-            if (_presenterComponent) {
-                Object.Destroy(_presenterComponent.gameObject);
             }
         }
     }

@@ -1,20 +1,15 @@
-using Rondo.Core.Lib;
-using Rondo.Core.Lib.Containers;
-using Rondo.Core.Memory;
 using Rondo.Unity.Utils;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.UI;
+using Debug = Rondo.Unity.Utils.Debug;
 
 namespace Rondo.Unity.Components {
-    public static unsafe partial class UI {
-        private static readonly Ts _spriteType = (Ts)typeof(Sprite);
-        private static readonly Ts _materialType = (Ts)typeof(Material);
-
-        public readonly struct ImageConfig {
-            public readonly S SpriteAddress;
+    public static partial class UI {
+        public readonly struct Image : IComp {
+            public readonly string SpriteAddress;
             public readonly float4 Color;
-            public readonly S MaterialAddress;
+            public readonly string MaterialAddress;
             public readonly bool RaycastTarget;
             public readonly float4 RaycastPadding;
             public readonly bool Maskable;
@@ -27,10 +22,10 @@ namespace Rondo.Unity.Components {
             public readonly bool FillClockwise;
             public readonly bool FillCenter;
 
-            public ImageConfig(
+            public Image(
+                string spriteAddress,
                 float4 color,
-                S spriteAddress = default,
-                S materialAddress = default,
+                string materialAddress = default,
                 bool raycastTarget = true,
                 float4 raycastPadding = default,
                 bool maskable = true,
@@ -58,95 +53,101 @@ namespace Rondo.Unity.Components {
                 FillClockwise = fillClockwise;
                 FillCenter = fillCenter;
             }
-        }
 
-        private static readonly ulong _idImage = CompExtensions.NextId;
+            public Image(
+                string spriteAddress,
+                string materialAddress = default,
+                bool raycastTarget = true,
+                float4 raycastPadding = default,
+                bool maskable = true,
+                ImageType imageType = ImageType.Simple,
+                bool preserveAspect = false,
+                float pixelsPerUnitMultiplier = 1,
+                FillMethod fillMethod = FillMethod.Horizontal,
+                FillOrigin fillOrigin = FillOrigin.OriginHorizontal_Left,
+                float fillAmount = 0,
+                bool fillClockwise = false,
+                bool fillCenter = true
+            ) : this(
+                spriteAddress, 1, materialAddress, raycastTarget, raycastPadding, maskable, imageType, preserveAspect,
+                pixelsPerUnitMultiplier, fillMethod, fillOrigin, fillAmount, fillClockwise, fillCenter
+            ) { }
 
-        public static Comp Image(ImageConfig config) {
-            return new Comp(_idImage, &SyncImage, Mem.C.CopyPtr(config));
-        }
-
-        private static void SyncImage(IPresenter presenter, GameObject gameObject, Ptr pPrev, Ptr pNext) {
-            if (pPrev == pNext) {
-                return;
-            }
-            if (pNext == Ptr.Null) {
-                Utils.Utils.DestroySafe<Image>(gameObject);
-                return;
-            }
-            if (pPrev == Ptr.Null) {
-                gameObject.AddComponent<Image>();
-            }
-
-            var image = gameObject.GetComponent<Image>();
-            var force = pPrev == Ptr.Null;
-            var prev = force ? default : *pPrev.Cast<ImageConfig>();
-            var next = *pNext.Cast<ImageConfig>();
-
-            if (force || !prev.Color.Equals(next.Color)) {
-                image.color = Colors.FromFloat4(next.Color);
-            }
-            if (force || (prev.RaycastTarget != next.RaycastTarget)) {
-                image.raycastTarget = next.RaycastTarget;
-            }
-            if (force || !prev.RaycastPadding.Equals(next.RaycastPadding)) {
-                image.raycastPadding = next.RaycastPadding;
-            }
-            if (force || (prev.Maskable != next.Maskable)) {
-                image.maskable = next.Maskable;
-            }
-            if (force || (prev.ImageType != next.ImageType)) {
-                image.type = (Image.Type)next.ImageType;
-            }
-            if (force || (prev.PreserveAspect != next.PreserveAspect)) {
-                image.preserveAspect = next.PreserveAspect;
-            }
-            // ReSharper disable once CompareOfFloatsByEqualityOperator
-            if (force || (prev.PixelsPerUnitMultiplier != next.PixelsPerUnitMultiplier)) {
-                image.pixelsPerUnitMultiplier = next.PixelsPerUnitMultiplier;
-            }
-            if (force || (prev.FillMethod != next.FillMethod)) {
-                image.fillMethod = (Image.FillMethod)next.FillMethod;
-            }
-            if (force || (prev.FillOrigin != next.FillOrigin)) {
-                image.fillOrigin = (int)next.FillOrigin;
-            }
-            // ReSharper disable once CompareOfFloatsByEqualityOperator
-            if (force || (prev.FillAmount != next.FillAmount)) {
-                image.fillAmount = next.FillAmount;
-            }
-            if (force || (prev.FillClockwise != next.FillClockwise)) {
-                image.fillClockwise = next.FillClockwise;
-            }
-            if (force || (prev.FillCenter != next.FillCenter)) {
-                image.fillCenter = next.FillCenter;
-            }
-
-            if (force || (prev.SpriteAddress != next.SpriteAddress)) {
-                if (next.SpriteAddress == S.Empty) {
-                    image.sprite = null;
+            public void Sync(IPresenter presenter, GameObject gameObject, IComp cPrev) {
+                var create = cPrev == null;
+                var image = create
+                        ? gameObject.AddComponent<UnityEngine.UI.Image>()
+                        : gameObject.GetComponent<UnityEngine.UI.Image>();
+                if (!image) {
+                    Debug.Log("WTF");
                 }
-                else {
-                    AddressablesCache.Load(next.SpriteAddress, _spriteType, gameObject, Xa.New<GameObject, Object>(&HandleImageSpriteLoaded));
+
+                var prev = create ? default : (Image)cPrev;
+
+                if (create || !prev.Color.Equals(Color)) {
+                    image.color = Colors.FromFloat4(Color);
+                }
+                if (create || (prev.RaycastTarget != RaycastTarget)) {
+                    image.raycastTarget = RaycastTarget;
+                }
+                if (create || !prev.RaycastPadding.Equals(RaycastPadding)) {
+                    image.raycastPadding = RaycastPadding;
+                }
+                if (create || (prev.Maskable != Maskable)) {
+                    image.maskable = Maskable;
+                }
+                if (create || (prev.ImageType != ImageType)) {
+                    image.type = (UnityEngine.UI.Image.Type)ImageType;
+                }
+                if (create || (prev.PreserveAspect != PreserveAspect)) {
+                    image.preserveAspect = PreserveAspect;
+                }
+                // ReSharper disable once CompareOfFloatsByEqualityOperator
+                if (create || (prev.PixelsPerUnitMultiplier != PixelsPerUnitMultiplier)) {
+                    image.pixelsPerUnitMultiplier = PixelsPerUnitMultiplier;
+                }
+                if (create || (prev.FillMethod != FillMethod)) {
+                    image.fillMethod = (UnityEngine.UI.Image.FillMethod)FillMethod;
+                }
+                if (create || (prev.FillOrigin != FillOrigin)) {
+                    image.fillOrigin = (int)FillOrigin;
+                }
+                // ReSharper disable once CompareOfFloatsByEqualityOperator
+                if (create || (prev.FillAmount != FillAmount)) {
+                    image.fillAmount = FillAmount;
+                }
+                if (create || (prev.FillClockwise != FillClockwise)) {
+                    image.fillClockwise = FillClockwise;
+                }
+                if (create || (prev.FillCenter != FillCenter)) {
+                    image.fillCenter = FillCenter;
+                }
+
+                if (create || (prev.SpriteAddress != SpriteAddress)) {
+                    if (string.IsNullOrEmpty(SpriteAddress)) {
+                        image.sprite = null;
+                    }
+                    else {
+                        AddressablesCache.Load<Sprite>(SpriteAddress, sprite => image.sprite = (Sprite)sprite);
+                    }
+                }
+
+                if (create || (prev.MaterialAddress != MaterialAddress)) {
+                    if (string.IsNullOrEmpty(MaterialAddress)) {
+                        image.material = null;
+                    }
+                    else {
+                        AddressablesCache.Load<Material>(
+                            MaterialAddress,
+                            material => image.material = (Material)material
+                        );
+                    }
                 }
             }
 
-            if (force || (prev.MaterialAddress != next.MaterialAddress)) {
-                if (next.MaterialAddress == S.Empty) {
-                    image.material = null;
-                }
-                else {
-                    AddressablesCache.Load(next.MaterialAddress, _materialType, gameObject, Xa.New<GameObject, Object>(&HandleImageMaterialLoaded));
-                }
+            public void Remove(IPresenter presenter, GameObject gameObject) {
+                Helpers.DestroySafe<UnityEngine.UI.Image>(gameObject);
             }
-        }
-
-        private static void HandleImageSpriteLoaded(GameObject gameObject, Object sprite) {
-            gameObject.GetComponent<Image>().sprite = (Sprite)sprite;
-        }
-
-        private static void HandleImageMaterialLoaded(GameObject gameObject, Object material) {
-            gameObject.GetComponent<Image>().material = (Material)material;
         }
 
         public enum ImageType {

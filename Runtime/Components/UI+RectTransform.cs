@@ -1,10 +1,9 @@
-using Rondo.Core.Memory;
 using Unity.Mathematics;
 using UnityEngine;
 
 namespace Rondo.Unity.Components {
-    public static unsafe partial class UI {
-        public readonly struct RectTransformConfig {
+    public static partial class UI {
+        public readonly struct RectTransform : IComp {
             public readonly float4 Rect;
             public readonly float2 AnchorMin;
             public readonly float2 AnchorMax;
@@ -13,7 +12,7 @@ namespace Rondo.Unity.Components {
             public readonly float3 Scale;
             public readonly bool Anchored;
 
-            public RectTransformConfig(
+            public RectTransform(
                 float4 rect,
                 float2 anchorMin,
                 float2 anchorMax,
@@ -30,114 +29,88 @@ namespace Rondo.Unity.Components {
                 Scale = scale;
                 Anchored = anchored;
             }
-        }
 
-        private static readonly ulong _idRectTransform = CompExtensions.NextId;
+            public RectTransform(
+                float2 position,
+                float2 size,
+                float2 pivot,
+                quaternion rotation,
+                float3 scale
+            ) : this(new float4(position, size), default, default, pivot, rotation, scale, false) { }
 
-        public static Comp RectTransform(RectTransformConfig config) {
-            return new Comp(_idRectTransform, &SyncRectTransform, Mem.C.CopyPtr(config));
-        }
+            public RectTransform(
+                float2 position,
+                float2 size,
+                float2 pivot
+            ) : this(position, size, pivot, quaternion.identity, 1) { }
 
-        public static Comp RectTransform(
-            float2 position,
-            float2 size,
-            float2 pivot,
-            quaternion rotation,
-            float3 scale
-        ) {
-            return RectTransform(new RectTransformConfig(
-                new float4(position, size), default, default, pivot, rotation, scale, false));
-        }
+            public RectTransform(
+                float2 anchorMin,
+                float2 anchorMax,
+                float2 offsetMin,
+                float2 offsetMax,
+                float2 pivot,
+                quaternion rotation,
+                float3 scale
+            ) : this(new float4(offsetMin, offsetMax), anchorMin, anchorMax, pivot, rotation, scale, true) { }
 
-        public static Comp RectTransform(
-            float2 position,
-            float2 size,
-            float2 pivot
-        ) {
-            return RectTransform(position, size, pivot, quaternion.identity, 1);
-        }
+            public RectTransform(
+                float2 anchorMin,
+                float2 anchorMax,
+                float2 offsetMin,
+                float2 offsetMax,
+                float2 pivot
+            ) : this(anchorMin, anchorMax, offsetMin, offsetMax, pivot, quaternion.identity, 1) { }
 
-        public static Comp RectTransform(
-            float2 anchorMin,
-            float2 anchorMax,
-            float2 offsetMin,
-            float2 offsetMax,
-            float2 pivot,
-            quaternion rotation,
-            float3 scale
-        ) {
-            return RectTransform(new RectTransformConfig(
-                new float4(offsetMin, offsetMax), anchorMin, anchorMax, pivot, rotation, scale, true));
-        }
+            public RectTransform(
+                float2 anchorMin,
+                float2 anchorMax,
+                float2 offsetMin,
+                float2 offsetMax
+            ) : this(anchorMin, anchorMax, offsetMin, offsetMax, 0.5f) { }
 
-        public static Comp RectTransform(
-            float2 anchorMin,
-            float2 anchorMax,
-            float2 offsetMin,
-            float2 offsetMax,
-            float2 pivot
-        ) {
-            return RectTransform(anchorMin, anchorMax, offsetMin, offsetMax, pivot, quaternion.identity, 1);
-        }
+            public RectTransform(
+                float2 anchorMin,
+                float2 anchorMax
+            ) : this(anchorMin, anchorMax, float2.zero, float2.zero, 0.5f) { }
 
-        public static Comp RectTransform(
-            float2 anchorMin,
-            float2 anchorMax,
-            float2 offsetMin,
-            float2 offsetMax
-        ) {
-            return RectTransform(anchorMin, anchorMax, offsetMin, offsetMax, 0.5f);
-        }
-
-        public static Comp RectTransform(
-            float2 anchorMin,
-            float2 anchorMax
-        ) {
-            return RectTransform(anchorMin, anchorMax, float2.zero, float2.zero, 0.5f);
-        }
-
-        private static void SyncRectTransform(IPresenter presenter, GameObject gameObject, Ptr pPrev, Ptr pNext) {
-            if (pPrev == pNext) {
-                return;
-            }
-            if (pNext == Ptr.Null) {
-                Utils.Utils.DestroySafe<RectTransform>(gameObject);
-                return;
-            }
-            var rt = gameObject.GetComponent<RectTransform>();
-
-            if ((pPrev == Ptr.Null) && !rt) {
-                rt = gameObject.AddComponent<RectTransform>();
-            }
-
-            var force = pPrev == Ptr.Null;
-            var prev = force ? default : *pPrev.Cast<RectTransformConfig>();
-            var next = *pNext.Cast<RectTransformConfig>();
-
-            if (force || !prev.Rect.Equals(next.Rect)) {
-                if (next.Anchored) {
-                    rt.offsetMin = next.Rect.xy;
-                    rt.offsetMax = next.Rect.zw;
+            public void Sync(IPresenter presenter, GameObject gameObject, IComp cPrev) {
+                var create = cPrev == null;
+                var rt = gameObject.GetComponent<UnityEngine.RectTransform>();
+                if (create && !rt) {
+                    rt = gameObject.AddComponent<UnityEngine.RectTransform>();
                 }
-                else {
-                    rt.anchoredPosition = next.Rect.xy;
-                    rt.sizeDelta = next.Rect.zw;
+                var prev = create ? default : (RectTransform)cPrev;
+
+                if (create || !prev.Rect.Equals(Rect)) {
+                    if (Anchored) {
+                        rt.offsetMin = Rect.xy;
+                        rt.offsetMax = Rect.zw;
+                    }
+                    else {
+                        rt.anchoredPosition = Rect.xy;
+                        rt.sizeDelta = Rect.zw;
+                    }
+                }
+                if (create || !prev.AnchorMin.Equals(AnchorMin)) {
+                    rt.anchorMin = AnchorMin;
+                }
+                if (create || !prev.AnchorMax.Equals(AnchorMax)) {
+                    rt.anchorMax = AnchorMax;
+                }
+                if (create || !prev.Pivot.Equals(Pivot)) {
+                    rt.pivot = Pivot;
+                }
+                if (create || !prev.Rotation.Equals(Rotation)) {
+                    rt.localRotation = Rotation;
+                }
+                if (create || !prev.Scale.Equals(Scale)) {
+                    rt.localScale = Scale;
                 }
             }
-            if (force || !prev.AnchorMin.Equals(next.AnchorMin)) {
-                rt.anchorMin = next.AnchorMin;
-            }
-            if (force || !prev.AnchorMax.Equals(next.AnchorMax)) {
-                rt.anchorMax = next.AnchorMax;
-            }
-            if (force || !prev.Pivot.Equals(next.Pivot)) {
-                rt.pivot = next.Pivot;
-            }
-            if (force || !prev.Rotation.Equals(next.Rotation)) {
-                rt.localRotation = next.Rotation;
-            }
-            if (force || !prev.Scale.Equals(next.Scale)) {
-                rt.localScale = next.Scale;
+
+            public void Remove(IPresenter presenter, GameObject gameObject) {
+                Utils.Helpers.DestroySafe<UnityEngine.RectTransform>(gameObject);
             }
         }
     }

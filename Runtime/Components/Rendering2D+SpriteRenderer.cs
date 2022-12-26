@@ -1,14 +1,9 @@
-using Rondo.Core.Lib;
-using Rondo.Core.Lib.Containers;
-using Rondo.Core.Memory;
 using Rondo.Unity.Utils;
 using Unity.Mathematics;
 using UnityEngine;
 
 namespace Rondo.Unity.Components {
-    public static unsafe class Rendering2D {
-        private static readonly Ts _spriteType = Ts.OfUnmanaged(typeof(Sprite));
-        private static readonly Ts _materialType = Ts.OfUnmanaged(typeof(Material));
+    public static class Rendering2D {
         private static Material _defaultSpriteMaterial = new(Shader.Find("Sprites/Default"));
 
 #if UNITY_EDITOR
@@ -35,11 +30,11 @@ namespace Rondo.Unity.Components {
             Pivot,
         }
 
-        public readonly struct SpriteRendererConfig {
-            public readonly S SpriteAddress;
+        public readonly struct SpriteRenderer : IComp {
+            public readonly string SpriteAddress;
             public readonly float4 Color;
             public readonly bool2 Flip;
-            public readonly S MaterialAddress;
+            public readonly string MaterialAddress;
             public readonly SpriteDrawMode DrawMode;
             public readonly int SortingLayer;
             public readonly int OrderInLayer;
@@ -47,11 +42,26 @@ namespace Rondo.Unity.Components {
             public readonly SpriteSortPoint SortPoint;
             public readonly float2 Size;
 
-            public SpriteRendererConfig(
-                float4 color,
-                S spriteAddress = default,
+            public SpriteRenderer(
+                string spriteAddress,
                 bool2 flip = default,
-                S materialAddress = default,
+                string materialAddress = default,
+                SpriteDrawMode drawMode = SpriteDrawMode.Simple,
+                int sortingLayer = 0,
+                int orderInLayer = 0,
+                SpriteMaskInteraction maskInteraction = SpriteMaskInteraction.None,
+                SpriteSortPoint sortPoint = SpriteSortPoint.Center,
+                float2 size = default
+            ) : this(
+                spriteAddress, 1, flip, materialAddress, drawMode, sortingLayer, orderInLayer,
+                maskInteraction, sortPoint, size
+            ) { }
+
+            public SpriteRenderer(
+                string spriteAddress,
+                float4 color,
+                bool2 flip = default,
+                string materialAddress = default,
                 SpriteDrawMode drawMode = SpriteDrawMode.Simple,
                 int sortingLayer = 0,
                 int orderInLayer = 0,
@@ -60,6 +70,7 @@ namespace Rondo.Unity.Components {
                 float2 size = default
             ) {
                 SpriteAddress = spriteAddress;
+
                 Color = color;
                 Flip = flip;
                 MaterialAddress = materialAddress;
@@ -70,89 +81,68 @@ namespace Rondo.Unity.Components {
                 SortPoint = sortPoint;
                 Size = size;
             }
-        }
 
-        private static readonly ulong _id = CompExtensions.NextId;
+            public void Sync(IPresenter presenter, GameObject gameObject, IComp cPrev) {
+                var create = cPrev == null;
+                var spriteRenderer = create
+                        ? gameObject.AddComponent<UnityEngine.SpriteRenderer>()
+                        : gameObject.GetComponent<UnityEngine.SpriteRenderer>();
+                var prev = create ? default : (SpriteRenderer)cPrev;
 
-        public static Comp SpriteRenderer(SpriteRendererConfig config) {
-            return new Comp(_id, &SyncSpriteRenderer, Mem.C.CopyPtr(config));
-        }
-
-        private static void SyncSpriteRenderer(IPresenter presenter, GameObject gameObject, Ptr pPrev, Ptr pNext) {
-            if (pPrev == pNext) {
-                return;
-            }
-            if (pNext == Ptr.Null) {
-                Utils.Utils.DestroySafe<SpriteRenderer>(gameObject);
-                return;
-            }
-            if (pPrev == Ptr.Null) {
-                gameObject.AddComponent<SpriteRenderer>();
-            }
-            var force = pPrev == Ptr.Null;
-            var prev = force ? default : *pPrev.Cast<SpriteRendererConfig>();
-            var next = *pNext.Cast<SpriteRendererConfig>();
-            var spriteRenderer = gameObject.GetComponent<SpriteRenderer>();
-
-            if (force || !prev.Color.Equals(next.Color)) {
-                spriteRenderer.color = Colors.FromFloat4(next.Color);
-            }
-            if (force || !prev.Flip.Equals(next.Flip)) {
-                spriteRenderer.flipX = next.Flip.x;
-                spriteRenderer.flipY = next.Flip.y;
-            }
-            if (force || (prev.DrawMode != next.DrawMode)) {
-                spriteRenderer.drawMode = (UnityEngine.SpriteDrawMode)next.DrawMode;
-            }
-            if (force || (prev.SortingLayer != next.SortingLayer)) {
-                spriteRenderer.sortingLayerID = next.SortingLayer;
-            }
-            if (force || (prev.OrderInLayer != next.OrderInLayer)) {
-                spriteRenderer.sortingOrder = next.OrderInLayer;
-            }
-            if (force || (prev.MaskInteraction != next.MaskInteraction)) {
-                spriteRenderer.maskInteraction = (UnityEngine.SpriteMaskInteraction)next.MaskInteraction;
-            }
-            if (force || (prev.SortPoint != next.SortPoint)) {
-                spriteRenderer.spriteSortPoint = (UnityEngine.SpriteSortPoint)next.SortPoint;
-            }
-            if (force || !prev.Size.Equals(next.Size)) {
-                spriteRenderer.size = next.Size;
-            }
-
-            if (force || (prev.SpriteAddress != next.SpriteAddress)) {
-                if (next.SpriteAddress == S.Empty) {
-                    spriteRenderer.sprite = null;
+                if (create || !prev.Color.Equals(Color)) {
+                    spriteRenderer.color = Colors.FromFloat4(Color);
                 }
-                else {
-                    AddressablesCache.Load(next.SpriteAddress, _spriteType, gameObject, HandleSpriteRendererSpriteLoaded(next.Size));
+                if (create || !prev.Flip.Equals(Flip)) {
+                    spriteRenderer.flipX = Flip.x;
+                    spriteRenderer.flipY = Flip.y;
                 }
-            }
+                if (create || (prev.DrawMode != DrawMode)) {
+                    spriteRenderer.drawMode = (UnityEngine.SpriteDrawMode)DrawMode;
+                }
+                if (create || (prev.SortingLayer != SortingLayer)) {
+                    spriteRenderer.sortingLayerID = SortingLayer;
+                }
+                if (create || (prev.OrderInLayer != OrderInLayer)) {
+                    spriteRenderer.sortingOrder = OrderInLayer;
+                }
+                if (create || (prev.MaskInteraction != MaskInteraction)) {
+                    spriteRenderer.maskInteraction = (UnityEngine.SpriteMaskInteraction)MaskInteraction;
+                }
+                if (create || (prev.SortPoint != SortPoint)) {
+                    spriteRenderer.spriteSortPoint = (UnityEngine.SpriteSortPoint)SortPoint;
+                }
+                if (create || !prev.Size.Equals(Size)) {
+                    spriteRenderer.size = Size;
+                }
 
-            if (force || (prev.MaterialAddress != next.MaterialAddress)) {
-                if (next.MaterialAddress == S.Empty) {
-                    spriteRenderer.material = _defaultSpriteMaterial;
+                if (create || (prev.SpriteAddress != SpriteAddress)) {
+                    if (string.IsNullOrEmpty(SpriteAddress)) {
+                        spriteRenderer.sprite = null;
+                    }
+                    else {
+                        var size = Size;
+                        AddressablesCache.Load<Sprite>(SpriteAddress, sprite => {
+                            spriteRenderer.sprite = (Sprite)sprite;
+                            spriteRenderer.size = size;
+                        });
+                    }
                 }
-                else {
-                    AddressablesCache.Load(
-                        next.MaterialAddress, _materialType, gameObject, Xa.New<GameObject, Object>(&HandleSpriteRendererMaterialLoaded)
-                    );
+
+                if (create || (prev.MaterialAddress != MaterialAddress)) {
+                    if (string.IsNullOrEmpty(MaterialAddress)) {
+                        spriteRenderer.material = _defaultSpriteMaterial;
+                    }
+                    else {
+                        AddressablesCache.Load<Material>(
+                            MaterialAddress, material => spriteRenderer.material = (Material)material
+                        );
+                    }
                 }
             }
-        }
 
-        private static Xa<GameObject, Object> HandleSpriteRendererSpriteLoaded(float2 size) {
-            static void Impl(GameObject gameObject, Object sprite, float2* size) {
-                var spriteRenderer = gameObject.GetComponent<SpriteRenderer>();
-                spriteRenderer.sprite = (Sprite)sprite;
-                spriteRenderer.size = *size;
+            public void Remove(IPresenter presenter, GameObject gameObject) {
+                Helpers.DestroySafe<UnityEngine.SpriteRenderer>(gameObject);
             }
-
-            return Xa.New<GameObject, Object, float2>(&Impl, size);
-        }
-
-        private static void HandleSpriteRendererMaterialLoaded(GameObject gameObject, Object material) {
-            gameObject.GetComponent<SpriteRenderer>().material = (Material)material;
         }
     }
 }

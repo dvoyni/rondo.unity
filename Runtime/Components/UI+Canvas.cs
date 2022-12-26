@@ -1,17 +1,10 @@
-using Rondo.Core.Lib;
-using Rondo.Core.Memory;
+using Rondo.Unity.Utils;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace Rondo.Unity.Components {
-    public static unsafe partial class UI {
-        public enum RenderMode {
-            ScreenSpaceOverlay,
-            ScreenSpaceCamera,
-            WorldSpace,
-        }
-
-        public readonly struct CanvasConfig {
+    public static partial class UI {
+        public readonly struct Canvas : IComp {
             public readonly RenderMode RenderMode;
             public readonly bool PixelPerfect;
             public readonly int TargetDisplay;
@@ -19,7 +12,7 @@ namespace Rondo.Unity.Components {
             public readonly int SortingLayer;
             public readonly int OrderInLayer;
 
-            public CanvasConfig(
+            public Canvas(
                 RenderMode renderMode,
                 bool pixelPerfect = false,
                 int targetDisplay = 0,
@@ -34,70 +27,62 @@ namespace Rondo.Unity.Components {
                 SortingLayer = sortingLayer;
                 OrderInLayer = orderInLayer;
             }
-        }
 
-        private static readonly ulong _idCanvas = CompExtensions.NextId;
+            public void Sync(IPresenter presenter, GameObject gameObject, IComp cPrev) {
+                var force = cPrev == null;
 
-        public static Comp Canvas(CanvasConfig config) {
-            return new Comp(_idCanvas, &SyncCanvas, Mem.C.CopyPtr(config));
-        }
+                var canvas = force ? gameObject.AddComponent<UnityEngine.Canvas>() : gameObject.GetComponent<UnityEngine.Canvas>();
+                var prev = force ? default : (Canvas)cPrev;
 
-        private static void SyncCanvas(IPresenter presenter, GameObject gameObject, Ptr pPrev, Ptr pNext) {
-            if (pPrev == pNext) {
-                return;
-            }
-            if (pNext == Ptr.Null) {
-                Utils.Utils.DestroySafe<CanvasScaler>(gameObject);
-                Utils.Utils.DestroySafe<GraphicRaycaster>(gameObject);
-                Utils.Utils.DestroySafe<Canvas>(gameObject);
-                return;
-            }
-            if (pPrev == Ptr.Null) {
-                gameObject.AddComponent<Canvas>();
-            }
+                if (
+                    force
+                    || (prev.RenderMode != RenderMode)
+                    || ((UnityEngine.RenderMode)RenderMode != canvas.renderMode)
+                ) {
+                    canvas.renderMode = (UnityEngine.RenderMode)RenderMode;
+                }
 
-            var canvas = gameObject.GetComponent<Canvas>();
-            var force = pPrev == Ptr.Null;
-            var prev = force ? default : *pPrev.Cast<CanvasConfig>();
-            var next = *pNext.Cast<CanvasConfig>();
+                if (force || (prev.PixelPerfect != PixelPerfect)) {
+                    canvas.pixelPerfect = PixelPerfect;
+                }
 
-            if (
-                force
-                || (prev.RenderMode != next.RenderMode)
-                || ((UnityEngine.RenderMode)next.RenderMode != canvas.renderMode)
-            ) {
-                canvas.renderMode = (UnityEngine.RenderMode)next.RenderMode;
-            }
+                if (force || (prev.TargetDisplay != TargetDisplay)) {
+                    canvas.targetDisplay = TargetDisplay;
+                }
 
-            if (force || (prev.PixelPerfect != next.PixelPerfect)) {
-                canvas.pixelPerfect = next.PixelPerfect;
-            }
+                if (force || (prev.SortingLayer != SortingLayer)) {
+                    canvas.sortingLayerID = SortingLayer;
+                }
 
-            if (force || (prev.TargetDisplay != next.TargetDisplay)) {
-                canvas.targetDisplay = next.TargetDisplay;
-            }
+                if (force || (prev.OrderInLayer != OrderInLayer)) {
+                    canvas.sortingOrder = OrderInLayer;
+                }
 
-            if (force || (prev.SortingLayer != next.SortingLayer)) {
-                canvas.sortingLayerID = next.SortingLayer;
-            }
-
-            if (force || (prev.OrderInLayer != next.OrderInLayer)) {
-                canvas.sortingOrder = next.OrderInLayer;
-            }
-
-            if (next.CameraRef == ObjRef.NoRef) {
-                if (force || (prev.CameraRef != ObjRef.NoRef)) {
-                    canvas.worldCamera = null;
+                if (CameraRef == ObjRef.NoRef) {
+                    if (force || (prev.CameraRef != ObjRef.NoRef)) {
+                        canvas.worldCamera = null;
+                    }
+                }
+                else {
+                    presenter.RequestObjRef(CameraRef, cameraObj => {
+                        // ReSharper disable once Unity.NoNullPropagation
+                        var cam = cameraObj?.GetComponent<Camera>();
+                        gameObject.GetComponent<UnityEngine.Canvas>().worldCamera = cam;
+                    });
                 }
             }
-            else {
-                presenter.RequestObjRef(next.CameraRef, gameObject, Ca.New<GameObject, GameObject>(&HandleCameraRef));
+
+            public void Remove(IPresenter presenter, GameObject gameObject) {
+                Helpers.DestroySafe<UnityEngine.UI.CanvasScaler>(gameObject);
+                Helpers.DestroySafe<GraphicRaycaster>(gameObject);
+                Helpers.DestroySafe<UnityEngine.Canvas>(gameObject);
             }
         }
 
-        private static void HandleCameraRef(GameObject gameObject, GameObject camera) {
-            var cam = ReferenceEquals(camera, null) ? null : camera.GetComponent<Camera>();
-            gameObject.GetComponent<Canvas>().worldCamera = cam;
+        public enum RenderMode {
+            ScreenSpaceOverlay,
+            ScreenSpaceCamera,
+            WorldSpace,
         }
     }
 }

@@ -1,50 +1,38 @@
-using Rondo.Core.Memory;
+using Rondo.Unity.Utils;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace Rondo.Unity.Components {
-    public static unsafe partial class UI {
-        public readonly struct ContentSizeFitterConfig {
+    public static partial class UI {
+        public readonly struct ContentSizeFitter : IComp {
             public readonly FitMode HorizontalFit;
             public readonly FitMode VerticalFit;
 
-            public ContentSizeFitterConfig(
+            public ContentSizeFitter(
                 FitMode horizontalFit = FitMode.Unconstrained,
                 FitMode verticalFit = FitMode.Unconstrained
             ) {
                 HorizontalFit = horizontalFit;
                 VerticalFit = verticalFit;
             }
-        }
 
-        private static readonly ulong _idContentSizeFitter = CompExtensions.NextId;
+            public void Sync(IPresenter presenter, GameObject gameObject, IComp cPrev) {
+                var create = cPrev == null;
+                var fitter = create
+                        ? gameObject.AddComponent<UnityEngine.UI.ContentSizeFitter>()
+                        : gameObject.GetComponent<UnityEngine.UI.ContentSizeFitter>();
+                var prev = create ? default : (ContentSizeFitter)cPrev;
 
-        public static Comp ContentSizeFitter(ContentSizeFitterConfig config) {
-            return new Comp(_idContentSizeFitter, &SyncContentSizeFitter, Mem.C.CopyPtr(config));
-        }
-
-        private static void SyncContentSizeFitter(IPresenter presenter, GameObject gameObject, Ptr pPrev, Ptr pNext) {
-            if (pPrev == pNext) {
-                return;
-            }
-            if (pNext == Ptr.Null) {
-                Utils.Utils.DestroySafe<ContentSizeFitter>(gameObject);
-                return;
-            }
-            if (pPrev == Ptr.Null) {
-                gameObject.AddComponent<ContentSizeFitter>();
+                if (create || (prev.HorizontalFit != HorizontalFit)) {
+                    fitter.horizontalFit = (UnityEngine.UI.ContentSizeFitter.FitMode)HorizontalFit;
+                }
+                if (create || (prev.VerticalFit != VerticalFit)) {
+                    fitter.verticalFit = (UnityEngine.UI.ContentSizeFitter.FitMode)VerticalFit;
+                }
             }
 
-            var fitter = gameObject.GetComponent<ContentSizeFitter>();
-            var force = pPrev == Ptr.Null;
-            var prev = force ? default : *pPrev.Cast<ContentSizeFitterConfig>();
-            var next = *pNext.Cast<ContentSizeFitterConfig>();
-
-            if (force || (prev.HorizontalFit != next.HorizontalFit)) {
-                fitter.horizontalFit = (ContentSizeFitter.FitMode)next.HorizontalFit;
-            }
-            if (force || (prev.VerticalFit != next.VerticalFit)) {
-                fitter.verticalFit = (ContentSizeFitter.FitMode)next.VerticalFit;
+            public void Remove(IPresenter presenter, GameObject gameObject) {
+                Helpers.DestroySafe<UnityEngine.UI.ContentSizeFitter>(gameObject);
             }
         }
 

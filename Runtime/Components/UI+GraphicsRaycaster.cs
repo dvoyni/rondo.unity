@@ -1,22 +1,14 @@
-using Rondo.Core.Memory;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace Rondo.Unity.Components {
-    public static unsafe partial class UI {
-        public enum BlockingObjects {
-            None = 0,
-            TwoD = 1,
-            ThreeD = 2,
-            All = 3,
-        }
-
-        public readonly struct GraphicsRaycasterConfig {
+    public static partial class UI {
+        public readonly struct GraphicsRaycaster : IComp {
             public readonly bool IgnoreReversedGraphics;
             public readonly BlockingObjects BlockingObjects;
             public readonly int BlockingMask;
 
-            public GraphicsRaycasterConfig(
+            public GraphicsRaycaster(
                 BlockingObjects blockingObjects,
                 bool ignoreReversedGraphics = true,
                 int blockingMask = 0
@@ -25,42 +17,37 @@ namespace Rondo.Unity.Components {
                 BlockingObjects = blockingObjects;
                 BlockingMask = blockingMask;
             }
+
+            public void Sync(IPresenter presenter, GameObject gameObject, IComp cPrev) {
+                var create = cPrev == null;
+                var raycaster = create
+                        ? gameObject.AddComponent<GraphicRaycaster>()
+                        : gameObject.GetComponent<GraphicRaycaster>();
+                var prev = create ? default : (GraphicsRaycaster)cPrev;
+
+                if (create || (prev.IgnoreReversedGraphics != IgnoreReversedGraphics)) {
+                    raycaster.ignoreReversedGraphics = IgnoreReversedGraphics;
+                }
+
+                if (create || (prev.BlockingObjects != BlockingObjects)) {
+                    raycaster.blockingObjects = (GraphicRaycaster.BlockingObjects)BlockingObjects;
+                }
+
+                if (create || (prev.BlockingMask != BlockingMask)) {
+                    raycaster.blockingMask = BlockingMask;
+                }
+            }
+
+            public void Remove(IPresenter presenter, GameObject gameObject) {
+                Utils.Helpers.DestroySafe<GraphicRaycaster>(gameObject);
+            }
         }
 
-        private static readonly ulong _idGraphicsRaycaster = CompExtensions.NextId;
-
-        public static Comp GraphicsRaycaster(GraphicsRaycasterConfig config) {
-            return new Comp(_idGraphicsRaycaster, &SyncGraphicsRaycaster, Mem.C.CopyPtr(config));
-        }
-
-        private static void SyncGraphicsRaycaster(IPresenter presenter, GameObject gameObject, Ptr pPrev, Ptr pNext) {
-            if (pPrev == pNext) {
-                return;
-            }
-            if (pNext == Ptr.Null) {
-                Utils.Utils.DestroySafe<GraphicRaycaster>(gameObject);
-                return;
-            }
-            if (pPrev == Ptr.Null) {
-                gameObject.AddComponent<GraphicRaycaster>();
-            }
-
-            var raycaster = gameObject.GetComponent<GraphicRaycaster>();
-            var force = pPrev == Ptr.Null;
-            var prev = force ? default : *pPrev.Cast<GraphicsRaycasterConfig>();
-            var next = *pNext.Cast<GraphicsRaycasterConfig>();
-
-            if (force || (prev.IgnoreReversedGraphics != next.IgnoreReversedGraphics)) {
-                raycaster.ignoreReversedGraphics = next.IgnoreReversedGraphics;
-            }
-
-            if (force || (prev.BlockingObjects != next.BlockingObjects)) {
-                raycaster.blockingObjects = (GraphicRaycaster.BlockingObjects)next.BlockingObjects;
-            }
-
-            if (force || (prev.BlockingMask != next.BlockingMask)) {
-                raycaster.blockingMask = next.BlockingMask;
-            }
+        public enum BlockingObjects {
+            None = 0,
+            TwoD = 1,
+            ThreeD = 2,
+            All = 3,
         }
     }
 }

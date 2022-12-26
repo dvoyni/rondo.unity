@@ -1,18 +1,18 @@
-using Rondo.Core.Memory;
+using Rondo.Unity.Utils;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace Rondo.Unity.Components {
-    public static unsafe partial class UI {
-        public readonly struct LayoutElementConfig {
+    public static partial class UI {
+        public readonly struct LayoutElement : IComp {
             public readonly bool IgnoreLayout;
             public readonly int LayoutPriority;
             public readonly float2 Min;
             public readonly float2 Flexible;
             public readonly float2 Preferred;
 
-            public LayoutElementConfig(
+            public LayoutElement(
                 float2 preferred = default,
                 bool ignoreLayout = false,
                 int layoutPriority = 0,
@@ -25,48 +25,34 @@ namespace Rondo.Unity.Components {
                 Flexible = flexible;
                 Preferred = preferred;
             }
-        }
 
-        private static readonly ulong _idLayoutElement = CompExtensions.NextId;
+            public void Sync(IPresenter presenter, GameObject gameObject, IComp cPrev) {
+                var force = cPrev == null;
+                var ltel = force ? gameObject.AddComponent<UnityEngine.UI.LayoutElement>() : gameObject.GetComponent<UnityEngine.UI.LayoutElement>();
+                var prev = force ? default : (LayoutElement)cPrev;
 
-        public static Comp LayoutElement(LayoutElementConfig config) {
-            return new Comp(_idLayoutElement, &SyncLayoutElement, Mem.C.CopyPtr(config));
-        }
+                if (force || (prev.IgnoreLayout != IgnoreLayout)) {
+                    ltel.ignoreLayout = IgnoreLayout;
+                }
+                if (force || (prev.LayoutPriority != LayoutPriority)) {
+                    ltel.layoutPriority = LayoutPriority;
+                }
+                if (force || !prev.Min.Equals(Min)) {
+                    ltel.minWidth = Min.x;
+                    ltel.minHeight = Min.y;
+                }
+                if (force || !prev.Flexible.Equals(Flexible)) {
+                    ltel.flexibleWidth = prev.Flexible.x;
+                    ltel.flexibleHeight = prev.Flexible.y;
+                }
+                if (force || !prev.Preferred.Equals(Preferred)) {
+                    ltel.preferredWidth = Preferred.x;
+                    ltel.preferredHeight = Preferred.y;
+                }
+            }
 
-        private static void SyncLayoutElement(IPresenter presenter, GameObject gameObject, Ptr pPrev, Ptr pNext) {
-            if (pPrev == pNext) {
-                return;
-            }
-            if (pNext == Ptr.Null) {
-                Utils.Utils.DestroySafe<LayoutElement>(gameObject);
-                return;
-            }
-            if (pPrev == Ptr.Null) {
-                gameObject.AddComponent<LayoutElement>();
-            }
-
-            var ltel = gameObject.GetComponent<LayoutElement>();
-            var force = pPrev == Ptr.Null;
-            var prev = force ? default : *pPrev.Cast<LayoutElementConfig>();
-            var next = *pNext.Cast<LayoutElementConfig>();
-
-            if (force || (prev.IgnoreLayout != next.IgnoreLayout)) {
-                ltel.ignoreLayout = next.IgnoreLayout;
-            }
-            if (force || (prev.LayoutPriority != next.LayoutPriority)) {
-                ltel.layoutPriority = next.LayoutPriority;
-            }
-            if (force || !prev.Min.Equals(next.Min)) {
-                ltel.minWidth = next.Min.x;
-                ltel.minHeight = next.Min.y;
-            }
-            if (force || !prev.Flexible.Equals(next.Flexible)) {
-                ltel.flexibleWidth = prev.Flexible.x;
-                ltel.flexibleHeight = prev.Flexible.y;
-            }
-            if (force || !prev.Preferred.Equals(next.Preferred)) {
-                ltel.preferredWidth = next.Preferred.x;
-                ltel.preferredHeight = next.Preferred.y;
+            public void Remove(IPresenter presenter, GameObject gameObject) {
+                Helpers.DestroySafe<UnityEngine.UI.LayoutElement>(gameObject);
             }
         }
     }
